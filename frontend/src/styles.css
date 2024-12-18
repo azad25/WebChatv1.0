@@ -1,0 +1,129 @@
+.app{
+  overflow: hidden;
+}
+.chat-window {
+    width: 60%;
+    margin: 2rem auto;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #fefefe;
+  }
+  
+  .messages {
+    max-height: 100vh;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  
+  .message {
+    margin: 0.5rem 0;
+  }
+  
+  .message.user {
+    text-align: right;
+  }
+  
+  .message.ai {
+    text-align: left;
+  }
+  
+  .actions button {
+    margin: 0.2rem;
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .actions button:hover {
+    background-color: #0056b3;
+  }
+  
+  .input-area {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  textarea:focus {
+    outline: none!important;
+  }
+  
+  .input-area input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+  }
+  
+  .input-area input:focus {
+    border: 1px solid transparent;
+    box-shadow: none;
+  }
+  
+  .input-area button {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .chat-window {
+        width: 90%;
+        margin: 1rem auto;
+        padding: 0.5rem;
+    }
+
+    .messages {
+        max-height: 300px;
+    }
+
+    .input-area {
+        flex-direction: column; /* Stack input and button vertically */
+        gap: 0.2rem;
+    }
+
+    .input-area input, textarea {
+        width: 100%; /* Full width for input */
+        padding: 0.75rem; /* Increased padding for better touch targets */
+    }
+
+    .input-area button {
+        width: 100%; /* Full width for button */
+        padding: 0.75rem; /* Increased padding for better touch targets */
+    }
+
+    .actions button {
+        width: 100%; /* Full width for action buttons */
+        padding: 0.75rem; /* Increased padding for better touch targets */
+    }
+  }
+
+  @media (max-width: 480px) {
+    .chat-window {
+        width: 95%;
+        margin: 0.5rem auto;
+        padding: 0.5rem;
+    }
+
+    .messages {
+        max-height: 250px;
+    }
+
+    .input-area {
+        flex-direction: column; /* Stack input and button vertically */
+        gap: 0.1rem;
+    }
+
+    .input-area input, .input-area button, .actions button {
+        width: 100%; /* Full width for all buttons and inputs */
+        padding: 0.6rem; /* Adjust padding for better touch targets */
+    }
+  }
+  
