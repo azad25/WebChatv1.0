@@ -4,7 +4,7 @@ node_modules/
 # Build output
 build/
 dist/
-pycache/
+__pycache/
 config/
 # Logs
 logs
