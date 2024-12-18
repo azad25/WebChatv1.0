@@ -1,23 +1,22 @@
 from ollama import Client
 from web_service import fetch_web_data  # Ensure this import is available
-
+import json
 # Initialize the Llama model
 client = Client()
 
-def generate_response(llm_response):
+async def generate_response(llm_response, genai_model):
     try:
         # Ensure llm_response is valid
-        if not llm_response or not isinstance(llm_response, str):
-            print("Error: Invalid llm_response provided.")
-            return {"response": "Invalid response from the model.", "actions": []}
-
+        # if not llm_response or not isinstance(llm_response, str):
+        #     print("Error: Invalid llm_response provided.")
+        #     return {"response": "Invalid response from the model.", "actions": []}
         # Prompt the LLM to format the response in Markdown
-        formatted_response = format_response(llm_response)
-        response = {"response": formatted_response, "actions": []}
+        # formatted_response = format_response(llm_response)
+        response = {"response": llm_response, "actions": []}
 
         # Prompt the LLM to generate keywords
-        keyword_prompt = f"Extract minimum 5 or more numbered list of concise keywords (1-2 words) related to the following text:\n\n{llm_response}"
-        keyword_response = request_keywords_from_llm(keyword_prompt)
+        keyword_prompt = f"Extract minimum 5 or more numbered list of concise keywords (1-2 words) related to the following text:\n\n{response}"
+        keyword_response = await request_keywords_from_llm(keyword_prompt, genai_model)
         print(f"Keyword response from LLM: {keyword_response}")  # Debugging line
         keywords = parse_keywords(keyword_response)
         print(f"Parsed keywords: {keywords}")  # Debugging line
@@ -31,19 +30,19 @@ def generate_response(llm_response):
             })
 
         # Example dynamic action generation based on response content
-        if "visit" in llm_response.lower():
-            response["actions"].append({
-                "label": "Visit URL",
-                "type": "open_url",
-                "data": ""  # Replace with actual URL extraction logic
-            })
+        # if "visit" in llm_response.lower():
+        #     response["actions"].append({
+        #         "label": "Visit URL",
+        #         "type": "open_url",
+        #         "data": ""  # Replace with actual URL extraction logic
+        #     })
 
-        if "summarize" in llm_response.lower():
-            response["actions"].append({
-                "label": "Summarize Content",
-                "type": "summarize",
-                "data": {"url": ""}  # Replace with actual URL extraction logic
-            })
+        # if "summarize" in llm_response.lower():
+        #     response["actions"].append({
+        #         "label": "Summarize Content",
+        #         "type": "summarize",
+        #         "data": {"url": ""}  # Replace with actual URL extraction logic
+        #     })
 
         # Always include an "ask" action
         response["actions"].append({
@@ -57,14 +56,19 @@ def generate_response(llm_response):
         print(f"Error generating response: {e}")
         return {"response": "An error occurred while generating the response.", "actions": []}
 
-def request_keywords_from_llm(prompt):
+async def request_keywords_from_llm(prompt, genai_model):
     # This function should send the prompt to the LLM and return the response
     # Replace with actual API call to your LLM
     try:
         # Example API call to LLM
-        response = client.generate(model="llama3.2", prompt=prompt)
-        if response and hasattr(response, 'response'):
-            return response.response
+        # response = client.generate(model="llama3.2", prompt=prompt)
+        # response =await genai_model.generate_content(prompt, stream=True)
+
+        chat = genai_model.start_chat()
+        response = chat.send_message("Respond in a detailed article(200 words) with headings and key points with related links if any based on the following context: "+prompt)
+        print(response.text)
+        if response.text:
+            return response.text
         else:
             print("Error: LLM did not return a valid response.")
             return ""
@@ -73,6 +77,10 @@ def request_keywords_from_llm(prompt):
         return ""
 
 def parse_keywords(keyword_response):
+    # Ensure keyword_response is a string
+    if isinstance(keyword_response, dict):
+        keyword_response = keyword_response.get('text', '')
+
     # Split the response into lines
     lines = keyword_response.split("\n")
     keywords = []
@@ -88,7 +96,6 @@ def parse_keywords(keyword_response):
                 keywords.append(keyword)
 
     return keywords
-
 def format_response(text):
     # Simple formatting logic to convert text into a plain text format
     paragraphs = text.split('\n')

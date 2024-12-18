@@ -31,6 +31,7 @@ const StyledLoadingDots = styled(Box)({
 const LoadingDots = () => {
   return (
     <StyledLoadingDots>
+      <span>Processing </span> 
       <div></div>
       <div></div>
       <div></div>

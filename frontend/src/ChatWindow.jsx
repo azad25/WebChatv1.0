@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, TextField, Typography, IconButton, Button, Select, MenuItem, Paper } from "@mui/material";
-import { Settings, Send, AttachFile, Search, OpenInNew, Language, DarkMode, LightMode } from "@mui/icons-material";
+import { Settings, Send, AttachFile, Search, OpenInNew, Language, DarkMode, LightMode, Add } from "@mui/icons-material";
 import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatAvatar from "./ChatAvatar";
@@ -13,7 +13,7 @@ export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false); // State for dark mode
-  const [selectedModel, setSelectedModel] = useState("llama3.1"); // Default model
+  const [selectedModel, setSelectedModel] = useState("gemini-2.0"); // Default model
 
   const inputRef = useRef(null);
   const messageEndRef = useRef(null);
@@ -36,7 +36,7 @@ const handleSelect = (model) => {
 //   setShowSelect(false); // Hide the select box after selection
 // };
 const models = [
-  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
+  { value: "gemini-2.0", label: "Gemini 2.0" },
   { value: "gpt-4", label: "GPT-4" },
   { value: "llama3.1", label: "LLama 3.1" },
 ];
@@ -44,7 +44,7 @@ const models = [
 
   const fetchResponse = async (userMessage) => {
     try {
-      const response = await axios.post("http://192.168.0.101:5001/api/process", {
+      const response = await axios.post("http://192.168.0.103:5002/api/process", {
         query: userMessage,
       });
       if (response.status === 200) {
@@ -135,7 +135,7 @@ const models = [
 
   const newChat = async () => {
     try {
-      await axios.post("http://192.168.0.101:5001/api/clear_context"); // Clear context in the backend
+      await axios.post("http://192.168.0.103:5002/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
       setInput(""); // Clear the input field
       console.log("New chat started");
@@ -181,7 +181,7 @@ const models = [
           {isDarkMode ? <LightMode /> : <DarkMode />}
         </Button>
         <Typography variant="h5" sx={{ color: isDarkMode ? "#007bff" : "#000000" }}>
-          WebChat v1.0 (AI Chatbot)
+          <ChatAvatar src="/ai-avatar.png" />
         </Typography>
       </Box>
 
@@ -209,6 +209,7 @@ const models = [
               <Box sx={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginTop: "10px", gap: "4px" }}>
                 {message.actions.map((action, index) => (
                   <Button
+                    disabled={isLoading}
                     key={index}
                     onClick={() => handleAction(action)}  // Handle action click
                     variant="contained"
@@ -229,6 +230,14 @@ const models = [
         display: "flex", width: "100%", alignItems: "center", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
         color: isDarkMode ? "#007bff" : "#000000"
       }}>
+        <IconButton 
+        sx={{
+          '&.Mui-disabled': { // Background color when disabled
+            color: '#007bff', // Text color when disabled
+          },
+        }} onClick={newChat} variant="outlined" color="primary" disabled={isLoading}>
+          <Add/>
+        </IconButton>
         <TextField
           placeholder="Type your message..."
           variant="outlined"
@@ -269,14 +278,7 @@ const models = [
             <AttachFile />
           </IconButton>
         </label>
-        <IconButton 
-        sx={{
-          '&.Mui-disabled': { // Background color when disabled
-            color: '#007bff', // Text color when disabled
-          },
-        }} onClick={newChat} variant="outlined" color="primary" disabled={isLoading}>
-          <OpenInNew />
-        </IconButton>
+        
         <IconButton 
         sx={{
           '&.Mui-disabled': { // Background color when disabled
