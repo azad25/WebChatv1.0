@@ -1,7 +1,13 @@
-import google.generativeai as genai
-import typing_extensions as typing
+import os
+from dotenv import load_dotenv
+from google.generativeai import GenerativeModel, configure
+# Configure the API key separately
+load_dotenv()
 
-async def genai_model():
-    genaimodel = genai.configure(api_key="AIzaSyBnVkT9wiLnMv_RQmVIEkb-meUgPL2qXKs")
-    # genai_model = genaimodel.GenerativeModel("gemini-1.5-flash")
-    return genai_model
+gemini_key = os.getenv("GEMINI_API_KEY")
+configure(api_key=str(gemini_key))
+
+geminiModel = GenerativeModel(
+        model_name='gemini-2.0-flash-exp',  # Use the correct model name
+    )
+# genai_model = genai.GenerativeModel("gemini-1.5-flash")

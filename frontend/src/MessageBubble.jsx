@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 
 const StyledMessageBubble = styled(Box)(({ isUser }) => ({
   maxWidth: "70%",
-  padding: "0 10px",
+  padding: "15px 30px",
   borderRadius: "20px",
   backgroundColor: isUser ? "#007aff" : "#e5e5ea",
   color: isUser ? "#ffffff" : "#000000",
@@ -28,6 +28,7 @@ const MessageBubble = ({ isUser, text }) => {
       setDisplayedText((prev) => prev + fullText[index]);
       index++;
       if (index >= fullText.length) {
+        setDisplayedText(fullText);
         clearInterval(interval);
       }
     }, 1);

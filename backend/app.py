@@ -5,26 +5,16 @@ from llm_service import process_with_llm
 from web_service import fetch_web_data
 from action_service import generate_response
 from context import chat_context
-from genaimodel import genai_model
-from google.generativeai import GenerativeModel, configure  # Ensure correct imports
-import os
-from dotenv import load_dotenv
+from genaimodel import geminiModel
 
 
 app = Flask(__name__)
+
 CORS(app)
 # Load environment variables from .env file
-load_dotenv()
-gemini_key = os.getenv("GEMINI_API_KEY")
-
-# Configure the API key separately
-configure(api_key=str(gemini_key))
-
 @app.route("/api/process", methods=["POST"])
 async def process_request():
-    genaimodel = GenerativeModel(
-        model_name='gemini-2.0-flash-exp',  # Use the correct model name
-    )
+    
     data = request.get_json()
     user_query = data.get("query", "")
     # session_id = data.get("session_id")  # Get session ID from request
@@ -34,9 +24,9 @@ async def process_request():
 
     try:
         # Step 1: Process with Llama"
-        llm_response = await process_with_llm(user_query, genaimodel)
+        llm_response = await process_with_llm(user_query, geminiModel)
         # Step 3: Generate final response
-        final_response = await generate_response(llm_response, genaimodel)
+        final_response = await generate_response(llm_response, geminiModel)
 
         return jsonify(final_response)
     except Exception as e:
