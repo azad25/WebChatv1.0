@@ -17,7 +17,6 @@ async def generate_response(llm_response, genai_model):
         # Prompt the LLM to generate keywords
         keyword_prompt = f"Extract minimum 5 or more numbered list of concise keywords (1-2 words) related to the following text:\n\n{response}"
         keyword_response = await request_keywords_from_llm(keyword_prompt, genai_model)
-        print(f"Keyword response from LLM: {keyword_response}")  # Debugging line
         keywords = parse_keywords(keyword_response)
         print(f"Parsed keywords: {keywords}")  # Debugging line
 
@@ -65,8 +64,7 @@ async def request_keywords_from_llm(prompt, genai_model):
         # response =await genai_model.generate_content(prompt, stream=True)
 
         chat = genai_model.start_chat()
-        response = chat.send_message("Respond in a detailed article(200 words) with headings and key points with related links if any based on the following context: "+prompt)
-        print(response.text)
+        response = chat.send_message("Respond with Sir and in a detailed article(200 words) with headings and key points with related links if any based on the following context and your analysis: "+prompt)
         if response.text:
             return response.text
         else:

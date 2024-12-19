@@ -4,8 +4,9 @@ node_modules/
 # Build output
 build/
 dist/
-__pycache/
+backend/__pycache__/
 config/
+backend/.env
 # Logs
 logs
 *.log

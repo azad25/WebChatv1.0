@@ -44,7 +44,7 @@ const models = [
 
   const fetchResponse = async (userMessage) => {
     try {
-      const response = await axios.post("http://192.168.0.103:5002/api/process", {
+      const response = await axios.post("http://192.168.0.107:5002/api/process", {
         query: userMessage,
       });
       if (response.status === 200) {
@@ -135,7 +135,7 @@ const models = [
 
   const newChat = async () => {
     try {
-      await axios.post("http://192.168.0.103:5002/api/clear_context"); // Clear context in the backend
+      await axios.post("http://192.168.0.107:5002/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
       setInput(""); // Clear the input field
       console.log("New chat started");

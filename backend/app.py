@@ -7,12 +7,18 @@ from action_service import generate_response
 from context import chat_context
 from genaimodel import genai_model
 from google.generativeai import GenerativeModel, configure  # Ensure correct imports
+import os
+from dotenv import load_dotenv
 
-# Configure the API key separately
-configure(api_key="AIzaSyBnVkT9wiLnMv_RQmVIEkb-meUgPL2qXKs")
 
 app = Flask(__name__)
 CORS(app)
+# Load environment variables from .env file
+load_dotenv()
+gemini_key = os.getenv("GEMINI_API_KEY")
+
+# Configure the API key separately
+configure(api_key=str(gemini_key))
 
 @app.route("/api/process", methods=["POST"])
 async def process_request():

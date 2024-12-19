@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import { styled } from "@mui/system";
 import ReactMarkdown from 'react-markdown';
@@ -18,9 +18,25 @@ const StyledMessageBubble = styled(Box)(({ isUser }) => ({
 }));
 
 const MessageBubble = ({ isUser, text }) => {
+  const [displayedText, setDisplayedText] = useState('');
+
+  let fullText = text;
+
+  useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      setDisplayedText((prev) => prev + fullText[index]);
+      index++;
+      if (index >= fullText.length) {
+        clearInterval(interval);
+      }
+    }, 1);
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, [fullText]);
   return (
     <StyledMessageBubble isUser={isUser}>
-      <ReactMarkdown>{text}</ReactMarkdown>
+      <ReactMarkdown>{isUser ? text : displayedText}</ReactMarkdown>
     </StyledMessageBubble>
   );
 };

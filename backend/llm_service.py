@@ -64,7 +64,7 @@ async def process_with_llm(query, genai_model):
         # Generate response with the full conversation history as context
         # response = client.generate(model=model, prompt=full_prompt)
         chat = genai_model.start_chat()
-        response = chat.send_message("Respond in a short article with a headings and key points with related links if any based on the following context: "+full_prompt)
+        response = chat.send_message("Respond as Sir and in a detailed short answer headings and topics with related links based on the following prompt and chat context: "+full_prompt)
         response_content = response.text
         # response = genai_model.generate_content(full_prompt, stream=True)
         # print(response.text)
