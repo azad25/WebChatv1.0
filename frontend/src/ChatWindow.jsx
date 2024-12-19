@@ -246,6 +246,7 @@ const models = [
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           sx={{ borderRadius: "5px", color: isDarkMode ? "#007bff" : "#000000", backgroundColor: "#fff" }}
+          disabled={isLoading}
         />
         <IconButton onClick={toggleList} color="primary" variant="outlined" disabled={isLoading}>
                 <Settings />
