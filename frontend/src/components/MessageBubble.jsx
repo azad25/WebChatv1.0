@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import { styled } from "@mui/system";
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from "rehype-raw";
 
 const StyledMessageBubble = styled(Box)(({ isUser }) => ({
   maxWidth: "70%",
@@ -28,16 +29,16 @@ const MessageBubble = ({ isUser, text }) => {
       setDisplayedText((prev) => prev + fullText[index]);
       index++;
       if (index >= fullText.length) {
-        setDisplayedText(fullText);
+        setDisplayedText((fullText));
         clearInterval(interval);
       }
-    }, 1);
+    }, 0.01);
 
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fullText]);
   return (
     <StyledMessageBubble isUser={isUser}>
-      <ReactMarkdown>{isUser ? text : displayedText}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{isUser ? text : displayedText}</ReactMarkdown>
     </StyledMessageBubble>
   );
 };

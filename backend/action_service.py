@@ -6,12 +6,6 @@ client = Client()
 
 async def generate_response(llm_response, genai_model):
     try:
-        # Ensure llm_response is valid
-        # if not llm_response or not isinstance(llm_response, str):
-        #     print("Error: Invalid llm_response provided.")
-        #     return {"response": "Invalid response from the model.", "actions": []}
-        # Prompt the LLM to format the response in Markdown
-        # formatted_response = format_response(llm_response)
         response = {"response": llm_response, "actions": []}
 
         # Prompt the LLM to generate keywords
@@ -59,12 +53,7 @@ async def request_keywords_from_llm(prompt, genai_model):
     # This function should send the prompt to the LLM and return the response
     # Replace with actual API call to your LLM
     try:
-        # Example API call to LLM
-        # response = client.generate(model="llama3.2", prompt=prompt)
-        # response =await genai_model.generate_content(prompt, stream=True)
-
-        chat = genai_model.start_chat()
-        response = chat.send_message("Respond with Sir and in a detailed article(200 words) with headings and key points with related links if any based on the following context and your analysis: "+prompt)
+        response = genai_model.send_message("Respond with Sir and in a detailed article(200 words) with headings and key points with related links if any based on the following context and your analysis: "+prompt)
         if response.text:
             return response.text
         else:

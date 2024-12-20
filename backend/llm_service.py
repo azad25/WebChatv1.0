@@ -2,6 +2,7 @@ from ollama import Client
 from web_service import fetch_web_data  # Ensure this import is available
 from context import chat_context  # Import chat_context
 import re
+import asyncio
 # import google.generativeai as genai
 # import typing_extensions as typing
 # import json
@@ -20,64 +21,39 @@ async def process_with_llm(query, genai_model):
     conversation_history = chat_context  # Use the global chat_context
 
     try:
-        # Fetch data if URL is provided
-        content = None
-         # Regular expression to find URLs in the prompt
-        url_pattern = r'(http?://[^\s]+)'
-        urls = re.findall(url_pattern, query)
-        for url in urls:
-            # print(url)
-            content = await fetch_web_data(url)
+        contents = ""
 
-            if not content:
-                return {"response": "Failed to fetch webpage content.", "actions": []}
-        # if url:
-        #     content = fetch_web_data(url)
-        #     if not content:
-        #         return {"response": "Failed to fetch webpage content.", "actions": []}
+         # Use a compiled regular expression for better performance
+        url_pattern = re.compile(r'(http?://[^\s]+)')
+        urls = url_pattern.findall(query)
 
-        # Combine user query with fetched content if available
-        prompt = query
-        if content:
-            prompt += f"\n{content}"
+        # Fetch data concurrently for all URLs
+        if urls:
+            fetch_tasks = [fetch_web_data(url) for url in urls]
+            contents = await asyncio.gather(*fetch_tasks)
+            # Check if any content was fetched successfully
+            if not any(contents):
+                return {"response": "Failed to fetch webpage content.", "actions": []
+            }
 
-        # Customize prompt for specific actions
-        # if action == "summarize":
-        #     prompt = f"Summarize :\n{prompt}"
-        # elif action == "search":
-        #     prompt = f"Search for specific keywords in the content and give me the answer:\n{prompt}"
+
+
+        # Combine user query with fetched content
+        prompt = query + "\n" + "\n".join(filter(None, contents))
 
         # Add the current user query to the conversation history
         conversation_history.append({"role": "user", "content": prompt})
 
-        # Use the correct model name here
-        # model = "llama3.2"  # Update with the model you're using
-        # print(f"Using model: {model}")  # Log the model name
-
         # Prepare the full conversation history as a prompt string
-        full_prompt = ""
-        for msg in conversation_history:
-            role = msg["role"]
-            content = msg["content"]
-            full_prompt += f"{role.capitalize()}: {content}\n\n"
+        full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
 
-        # Generate response with the full conversation history as context
-        # response = client.generate(model=model, prompt=full_prompt)
-        chat = genai_model.start_chat()
-        response = chat.send_message("Respond as Sir and in a detailed short answer headings and topics with related links based on the following prompt and chat context: "+full_prompt)
+
+        prompt = """"
+        Respond promptly as Sir and then Include relevant details with a title based on the topic. Conclude with a list of references and 
+        related links for further exploration based on the latest prompt and the chat history:
+        """+full_prompt
+        response = genai_model.send_message(prompt)
         response_content = response.text
-        # response = genai_model.generate_content(full_prompt, stream=True)
-        # print(response.text)
-        # Extract the response content from the GenerateResponse object
-        # response_content = response.text  # Access the response attribute directly
-
-        # Filter out unwanted information (like context numbers)
-        # if response.text and isinstance(response_content, str):
-        #     # You can also add more sophisticated filtering if needed
-        #     response_content = response_content.split("context=")[
-        #         0
-        #     ].strip()  # Remove everything after 'context='
-
 
         # Limit the number of refinement iterations
 #         MAX_REFINEMENTS = 1
@@ -89,8 +65,6 @@ async def process_with_llm(query, genai_model):
 #                         """
         
 #         for _ in range(MAX_REFINEMENTS):
-#             # refined_response = client.generate(model=model, prompt=refined_prompt)
-#             chat = genai_model.start_chat()
 #             refined_response = chat.send_message(refined_prompt)
 #             # refined_response = genai_model.generate_content(refined_prompt, stream=True)
 #             # Log the refined response for debugging
