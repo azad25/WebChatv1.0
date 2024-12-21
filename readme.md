@@ -1,6 +1,6 @@
 # WebChat - AI Chatbot
 
-WebChat is an AI-powered chatbot application that allows users to interact with various language models. This project utilizes React for the frontend and a Python backend to process user queries.
+WebChat is an Gemini AI-powered chatbot application that allows users to interact with gemini model via REST API. This project utilizes React for the frontend and a Python backend to process user queries. Autmated keyword generation and search is also implemented.
 ![Chat Interface Screenshot](ui.png)
 ## Table of Contents
 
@@ -13,7 +13,6 @@ WebChat is an AI-powered chatbot application that allows users to interact with 
 ## Features
 
 - Interactive chat interface
-- Supports multiple language models
 - Fetches web data for enhanced responses
 - Responsive design for mobile and desktop
 
@@ -25,7 +24,9 @@ WebChat is an AI-powered chatbot application that allows users to interact with 
 - Python (v3.9 or later)
 - pip (Python package manager)
 - Ollama (v1.9.0 or later)
-- LLama3.2
+
+- Google Generative Api (https://developers.google.com/generative-ai)
+- Google Cloud Subscription
 
 ### Frontend Setup
 
