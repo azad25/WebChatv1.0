@@ -12,6 +12,10 @@
     border-radius: 10px;
     background-color: #fefefe;
   }
+
+  .chat-window a{
+    color: #fff;
+  }
   
   .messages {
     max-height: 100vh;

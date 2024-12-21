@@ -1,9 +1,7 @@
-import uuid  # Import UUID for generating unique session IDs
+# import uuid  # Import UUID for generating unique session IDs
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from llm_service import process_with_llm
-from web_service import fetch_web_data
-from action_service import generate_response
 from context import chat_context
 from genaimodel import geminiModel
 
@@ -24,9 +22,9 @@ async def process_request():
 
     try:
         # Step 1: Process with Llama"
-        llm_response = await process_with_llm(user_query, geminiModel)
+        final_response = await process_with_llm(user_query, geminiModel)
         # Step 3: Generate final response
-        final_response = await generate_response(llm_response, geminiModel)
+        # final_response = await generate_response(llm_response, geminiModel)
 
         return jsonify(final_response)
     except Exception as e:

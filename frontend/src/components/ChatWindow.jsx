@@ -5,8 +5,11 @@ import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatAvatar from "./ChatAvatar";
 import LoadingDots from "./LoadingDots";
-
+import WeatherCard from "./WeatherCard";
+import AnimatedCard from './AnimatedCard';
+import { motion } from 'framer-motion';
 export default function ChatWindow() {
+  const [cardData, setCardData] = useState([]);
   const [showSelect, setShowSelect] = useState(false);
   const [showList, setShowList] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -15,6 +18,21 @@ export default function ChatWindow() {
   const [isDarkMode, setIsDarkMode] = useState(false); // State for dark mode
   const [selectedModel, setSelectedModel] = useState("gemini-2.0"); // Default model
 
+
+  const containerVariants = {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.3, // Delay between each card animation
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
   const inputRef = useRef(null);
   const messageEndRef = useRef(null);
 
@@ -77,6 +95,7 @@ const models = [
     const userMessage = { text: message, sender: "user" };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setCardData(null);
     setIsLoading(true);
 
     const loadingMessage = { text: "Loading...", sender: "assistant", isLoading: true };
@@ -84,8 +103,12 @@ const models = [
 
     try {
       const response = await fetchResponse(message);
-      console.log("Response from server:", response);
-
+      //clear card data
+      setCardData(null);
+      if (response && response.actions && response.actions.length > 0) {
+        setCardData(response.actions);
+      }
+      
       const assistantMessage = {
         text: response.response,
         sender: "assistant",
@@ -134,11 +157,12 @@ const models = [
   };
 
   const newChat = async () => {
+    setCardData(null);
     try {
       await axios.post("http://192.168.0.107:5002/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
       setInput(""); // Clear the input field
-      console.log("New chat started");
+      cardData = [];
     } catch (error) {
       console.error("Error starting new chat:", error);
     }
@@ -148,12 +172,8 @@ const models = [
     // Implement the logic for handling the action
     // You can add logic here to handle different action types
     // For example, you might want to send a message based on the action
-    if (action.type === "search") {
-      sendMessage(`${action.data}`);
-    } else if (action.type === "ask") {
-      sendMessage(`${action.data}`);
-    }
-    // Add more action handling as needed
+    setCardData(null);
+    sendMessage(`${action.data}`);
   };
 
   useEffect(() => {
@@ -176,15 +196,16 @@ const models = [
       padding: "20px",
       boxSizing: "border-box"
     }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-        <Button onClick={toggleDarkMode} variant="outlined" color="primary" sx={{ marginBottom: "20px" }}>
+      {/* <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+        <Button onClick={toggleDarkMode} color="primary" sx={{ marginBottom: "20px" }}>
           {isDarkMode ? <LightMode /> : <DarkMode />}
         </Button>
         <Typography variant="h5" sx={{ color: isDarkMode ? "#007bff" : "#000000" }}>
           <ChatAvatar src="/ai-avatar.png" />
         </Typography>
-      </Box>
-
+      </Box> */}
+      
+      
       <Box sx={{ flex: 1, overflowY: "auto", width: "100%", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7", color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column" }}>
         {messages.map((message, index) => (
           <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: message.sender === "user" ? "flex-end" : "flex-start", marginBottom: "10px" }}>
@@ -205,27 +226,81 @@ const models = [
                 </>
               )}
             </Box>
-            {Array.isArray(message.actions) && message.actions.length > 0 && (
+            {/* {Array.isArray(message.actions) && message.actions.length > 0 && (
               <Box sx={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginTop: "10px", gap: "4px" }}>
                 {message.actions.map((action, index) => (
+                  
+                  action.type === "card" ? (
+                    <Button
+                    disabled={isLoading}
+                    key={index}
+                    onClick={() => handleAction(action)}  // Handle action click
+                    variant="contained"
+                    sx={{ borderRadius: "20px", padding: "2px 5px", fontSize: "10px", backgroundColor: "#e74c3c", color: "white" }}  // Smaller button styles
+                  >
+                    {action.label.trim()}
+                  </Button>
+                  ) : 
+                  action.type === "help" ? (
                   <Button
                     disabled={isLoading}
                     key={index}
                     onClick={() => handleAction(action)}  // Handle action click
                     variant="contained"
-                    color="primary"
-                    sx={{ borderRadius: "10px", padding: "2px 5px", fontSize: "10px" }}  // Smaller button styles
+                    sx={{ borderRadius: "20px", padding: "2px 5px", fontSize: "10px", backgroundColor: "#2ecc71", color: "white" }}  // Smaller button styles
+                  >
+                    {action.label.trim()}
+                  </Button>) :
+                  action.type === "tools" && (
+                    <Button
+                    disabled={isLoading}
+                    key={index}
+                    onClick={() => handleAction(action)}  // Handle action click
+                    variant="contained"
+                    sx={{ borderRadius: "10px", padding: "2px 5px", fontSize: "10px", backgroundColor: "#f1c40f", color: "black" }}  // Smaller button styles
                   >
                     {action.label.trim()}
                   </Button>
+                  )
+                  // <Button
+                  //   disabled={isLoading}
+                  //   key={index}
+                  //   onClick={() => handleAction(action)}  // Handle action click
+                  //   variant="contained"
+                  //   color="primary"
+                  //   sx={{ borderRadius: "10px", padding: "2px 5px", fontSize: "10px" }}  // Smaller button styles
+                  // >
+                  //   {action.label.trim()}
+                  // </Button>
                 ))}
               </Box>
-            )}
+            )} */}
           </Box>
         ))}
         <div ref={messageEndRef} />
       </Box>
-
+      <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "left", width: "100%", marginBottom: "10px" }}>
+        {cardData && (
+          <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', minWidth: '100px' }}
+        >
+          {cardData.map((item, index) => (
+            (
+              <motion.div 
+                key={index} variants={cardVariants}>
+                  <Button onClick={() => handleAction(item)}>
+                    <AnimatedCard key={index} title={item.label} content={''} type={item.type}/>
+                  </Button>
+                </motion.div>
+            )
+          ))}
+        </motion.div>
+        )
+      }
+      </Box>
       <Box sx={{
         display: "flex", width: "100%", alignItems: "center", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
         color: isDarkMode ? "#007bff" : "#000000"
