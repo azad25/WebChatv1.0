@@ -32,7 +32,9 @@ const MessageBubble = ({ isUser, text }) => {
       while (index < text.length) {
         await new Promise((resolve) => setTimeout(resolve, 0.001));
         setDisplayedText((prev) => prev + text[index]);
-        messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+        if (messageEndRef.current) { // Check if the ref is not null
+          messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
         index++;
       }
     };

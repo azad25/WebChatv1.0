@@ -57,9 +57,7 @@ async def send_to_llm(genai_model, query):
     full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
     
     prompt = """"
-        Respond promptly as Sir and then response with details with a title based on the user query and perform any action if needed. Conclude with a list of references and 
-        related links for further exploration based on the latest prompt and the chat history:
-        """+full_prompt+" and then Extract minimum 5, only numbered list of relevant keywords to your response"
+        Respond promptly as Sir and then response with details with a title based on the user query and perform any action if needed.Grab all latest and up to date data from the url if the url is provided. Give sample code needed for the action if asked.Conclude with a list of references and related links for further exploration based on the latest prompt and the chat history if asked for details:"""+full_prompt+" and then Extract a ordered numbered list of minimum 5 of related keywords to your response"
     
     response = genai_model.send_message(prompt)
     response_content = remove_keywords_section(response.text)
