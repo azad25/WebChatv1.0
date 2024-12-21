@@ -22,7 +22,15 @@ async def process_with_llm(query, genai_model):
     conversation_history = chat_context  # Use the global chat_context
 
     try:
-        contents = ""
+        output_response = await asyncio.gather(send_to_llm(genai_model, query))
+        return output_response
+
+    except Exception as e:
+        print(f"Error processing with llm: {e}")
+        return {"error": str(e)}
+
+async def send_to_llm(genai_model, query):
+    contents = ""
 
          # Use a compiled regular expression for better performance
         # url_pattern = re.compile(r'(http?://[^\s]+)')
@@ -40,53 +48,53 @@ async def process_with_llm(query, genai_model):
 
 
         # Combine user query with fetched content
-        prompt = query + "\n" + "\n".join(filter(None, contents))
+    prompt = query + "\n" + "\n".join(filter(None, contents))
 
         # Add the current user query to the conversation history
-        conversation_history.append({"role": "user", "content": prompt})
+    conversation_history.append({"role": "user", "content": prompt})
 
         # Prepare the full conversation history as a prompt string
-        full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
-
-
-        prompt = """"
-        Respond promptly as Sir and then Include relevant details with a title based on the topic. Conclude with a list of references and 
+    full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
+    
+    prompt = """"
+        Respond promptly as Sir and then response with details with a title based on the user query and perform any action if needed. Conclude with a list of references and 
         related links for further exploration based on the latest prompt and the chat history:
-        """+full_prompt+" and then Extract minimum 5 or more, only numbered list of concise keywords (1-2 words) relevant to your response"
-        response = genai_model.send_message(prompt)
-        response_content = remove_keywords_section(response.text)
+        """+full_prompt+" and then Extract minimum 5, only numbered list of relevant keywords to your response"
+    
+    response = genai_model.send_message(prompt)
+    response_content = remove_keywords_section(response.text)
 
-        keywords = parse_keywords(response_content)
+    keywords = parse_keywords(response_content)
         # Loop through keywords and create actions
-        output_response = {}
-        output_response["response"] = response_content
-        output_response["actions"] = []
-        for keyword in keywords:
+    output_response = {}
+    output_response["response"] = response_content
+    output_response["actions"] = []
+    for keyword in keywords:
             output_response["actions"].append({
                 "label": f"'{keyword.strip()}'",
                 "type": "search",
                 "data": "search for:" + keyword.strip()
             })
         
-        output_response["actions"].append({
+    output_response["actions"].append({
             "label": "Summarize",
             "type": "ask",
             "data": "Summarize your response in a short and concise manner"
         })
 
-        output_response["actions"].append({
+    output_response["actions"].append({
             "label": "Analyse",
             "type": "help",
             "data": "Extract the key points and the content and give your analysis on the topic"
         })
 
-        output_response["actions"].append({
+    output_response["actions"].append({
             "label": "News Update Today",
             "type": "card",
             "data": "List top headlines from BBC, CNN, Reuters,Bdnews24.com"
         })
 
-        output_response["actions"].append({
+    output_response["actions"].append({
             "label": "Clear Chat",
             "type": "tools",
             "data": "Clear the chat history"
@@ -122,13 +130,8 @@ async def process_with_llm(query, genai_model):
 #                     refined_response_content  # Return the satisfactory refined response
 #                 )
 
-        conversation_history.append({"role": "assistant", "content": output_response})
-        return output_response
-
-    except Exception as e:
-        print(f"Error processing with llm: {e}")
-        return {"error": str(e)}
-
+    conversation_history.append({"role": "assistant", "content": output_response})
+    return output_response
 
 def is_satisfactory(response):
     # Implement your logic to determine if the response is satisfactory

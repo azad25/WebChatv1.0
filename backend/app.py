@@ -3,8 +3,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from llm_service import process_with_llm
 from context import chat_context
-from genaimodel import geminiModel
-
+from genaimodel import geminiModel,clear_history
 
 app = Flask(__name__)
 
@@ -33,6 +32,7 @@ async def process_request():
 @app.route("/api/clear_context", methods=["POST"])
 def clear_context():
     global chat_context
+    clear_history()
     chat_context.clear()  # Clear the chat context
     return jsonify({"message": "Chat context cleared successfully."}), 200
 

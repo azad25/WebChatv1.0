@@ -103,20 +103,30 @@ const models = [
 
     try {
       const response = await fetchResponse(message);
+      let res;
+       //response can be array or object
+       
       //clear card data
       setCardData(null);
-      if (response && response.actions && response.actions.length > 0) {
-        setCardData(response.actions);
+      if (response.length > 0) {
+        if (Array.isArray(response)) {
+          res = response[0];
+        } else {
+          res = response.text;
+        }
+        setCardData(res.actions);
+        const assistantMessage = {
+          text: res.response,
+          sender: "assistant",
+          actions: res.actions || [],
+          images: res.images || [],
+        };
+  
+        console.log(assistantMessage);
+          setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
       
-      const assistantMessage = {
-        text: response.response,
-        sender: "assistant",
-        actions: response.actions || [],
-        images: response.images || [],
-      };
-
-      setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
+      
     } catch (error) {
       console.error("Error occurred:", error);
       const errorMessage = {
@@ -288,10 +298,17 @@ const models = [
           style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', minWidth: '100px' }}
         >
           {cardData.map((item, index) => (
-            (
+            (item.type != "tools") ? (
               <motion.div 
                 key={index} variants={cardVariants}>
                   <Button onClick={() => handleAction(item)}>
+                    <AnimatedCard key={index} title={item.label} content={''} type={item.type}/>
+                  </Button>
+                </motion.div>
+            ) : (
+              <motion.div 
+                key={index} variants={cardVariants}>
+                  <Button onClick={() => newChat()}>
                     <AnimatedCard key={index} title={item.label} content={''} type={item.type}/>
                   </Button>
                 </motion.div>
@@ -323,7 +340,10 @@ const models = [
           sx={{ borderRadius: "5px", color: isDarkMode ? "#007bff" : "#000000", backgroundColor: "#fff" }}
           disabled={isLoading}
         />
-        <IconButton onClick={toggleList} color="primary" variant="outlined" disabled={isLoading}>
+        <IconButton onClick={toggleDarkMode} color="primary" variant="outlined">
+          {isDarkMode ? <LightMode /> : <DarkMode />}
+        </IconButton>
+        {/* <IconButton onClick={toggleList} color="primary" variant="outlined" disabled={isLoading}>
                 <Settings />
             </IconButton>
           {showList && (
@@ -362,7 +382,7 @@ const models = [
           },
         }} onClick={() => handleSearchWeb(input)} color="primary" disabled={isLoading}>
           <Language />
-        </IconButton>
+        </IconButton> */}
         <IconButton onClick={() => sendMessage(input)} color="primary" disabled={isLoading} 
         sx={{
           '&.Mui-disabled': { // Background color when disabled
