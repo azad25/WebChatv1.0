@@ -5,9 +5,9 @@ import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatAvatar from "./ChatAvatar";
 import LoadingDots from "./LoadingDots";
-import WeatherCard from "./WeatherCard";
 import AnimatedCard from './AnimatedCard';
 import { motion } from 'framer-motion';
+
 export default function ChatWindow() {
   const [cardData, setCardData] = useState([]);
   const [showSelect, setShowSelect] = useState(false);
