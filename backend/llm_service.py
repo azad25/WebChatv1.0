@@ -1,17 +1,8 @@
-from ollama import Client
 from web_service import fetch_web_data  # Ensure this import is available
 import re
 import asyncio
 from action_service import parse_keywords
 from context import chat_context
-# import google.generativeai as genai
-# import typing_extensions as typing
-# import json
-# genai.configure(api_key="AIzaSyAE39ga4oxiBzJQsWMrXWgqPB7SAmxBwmw")
-# genai_model = genai.GenerativeModel("gemini-1.5-flash")
-
-# Initialize the Llama model
-client = Client()
 
 # Initialize conversation history
 conversation_history = chat_context
@@ -33,45 +24,53 @@ async def send_to_llm(genai_model, query):
     contents = ""
 
          # Use a compiled regular expression for better performance
-        # url_pattern = re.compile(r'(http?://[^\s]+)')
-        # urls = url_pattern.findall(query)
-
-        # Fetch data concurrently for all URLs
-        # if urls:
-        #     fetch_tasks = [fetch_web_data(url) for url in urls]
-        #     contents = await asyncio.gather(*fetch_tasks)
-        #     # Check if any content was fetched successfully
-        #     if not any(contents):
-        #         return {"response": "Failed to fetch webpage content.", "actions": []
-        #     }
-
-
-
+    url_pattern = re.compile(r'(https?://[^\s]+)')
+    urls = url_pattern.findall(query)
+    # Fetch data concurrently for all URLs
+    prompt = ''
+    if urls:
+        search = 1
+        fetch_tasks = [fetch_web_data(url) for url in urls]
+        contents = await asyncio.gather(*fetch_tasks)
         # Combine user query with fetched content
-    prompt = query + "\n" + "\n".join(filter(None, contents))
+        prompt = query + "\n" + "\n".join(filter(None, contents))
+        # Check if any content was fetched successfully
+        if not any(contents):
+                return {"response": "Failed to fetch webpage content.", "actions": []
+            }
 
-        # Add the current user query to the conversation history
-    conversation_history.append({"role": "user", "content": prompt})
+    # Add the current user query to the conversation history
+    conversation_history.append({"role": "user", "content": query})
 
         # Prepare the full conversation history as a prompt string
     full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
     
     prompt = """"
-        Respond promptly as Sir and then response with details with a title based on the user query and perform any action if needed.Grab all latest and up to date data from the url if the url is provided. Give sample code needed for the action if asked.Conclude with a list of references and related links for further exploration based on the latest prompt and the chat history if asked for details:"""+full_prompt+" and then Extract a ordered numbered list of minimum 5 of related keywords to your response"
+        Respond fast as "Sir" and then response with details with a title based on the user query and perform any action if needed. Give sample code needed if any query on programming terms.Conclude with a list of related links for further exploration and the chat history if asked for details:"""+full_prompt+"and then MUST Extract minimum 5 or more,numbered list of related keywords to your response. Give response like smart assistant and don't include what i asked to do in the response"
     
     response = genai_model.send_message(prompt)
+    links = parse_links(response.text)
     response_content = remove_keywords_section(response.text)
-
-    keywords = parse_keywords(response_content)
+    keywords = parse_keywords(response.text)
         # Loop through keywords and create actions
     output_response = {}
+
     output_response["response"] = response_content
     output_response["actions"] = []
+    output_response["links"] = []
+    for link in links:
+        # Remove any unwanted characters or formatting issues
+        clean_link = link.strip().replace('@', '').replace(';', '').replace(')', '')
+        # Ensure the link is not wrapped in markdown-like syntax
+        if '(' in clean_link and ')' in clean_link:
+            clean_link = clean_link.split('(')[-1].split(')')[0]
+        output_response["links"].append(clean_link)
+
     for keyword in keywords:
             output_response["actions"].append({
                 "label": f"'{keyword.strip()}'",
                 "type": "search",
-                "data": "search for:" + keyword.strip()
+                "data": keyword.strip()
             })
         
     output_response["actions"].append({
@@ -137,14 +136,19 @@ def is_satisfactory(response):
         return False  # Response is too short to be satisfactory
     return True  # Placeholder for actual satisfaction logic
 
+def parse_links(response):
+    # Use a regular expression to find all URLs in the response
+    url_pattern = re.compile(r'https?://[^\s]+')
+    return url_pattern.findall(response)
+
 def remove_keywords_section(response):
     # Find the index where the "Keywords:" section starts
-    keywords_index = response.find("Keywords:")
+    keywords_index =  response.find("Keywords")
     
     # If the "Keywords:" section is found, remove it
     if keywords_index != -1:
         # Find the end of the keywords section
-        end_of_keywords = response.find("\n\n", keywords_index)
+        end_of_keywords = response.find("/n/n", keywords_index)
         if end_of_keywords == -1:
             end_of_keywords = len(response)
         # Remove the keywords section

@@ -10,10 +10,9 @@ const AnimatedCard = ({ title, content, type }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <Box sx={{
-        minWidth: '100px',
         borderRadius: '8px',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
@@ -21,10 +20,9 @@ const AnimatedCard = ({ title, content, type }) => {
         color: backgroundColor === "#fdcb6e" ? 'black' : 'white',
         padding: '5px 15px',
         cursor: 'pointer',
-        fontSize: "0.9rem",
+        fontSize: "10px",
         textTransform: "capitalize",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         ":hover": {

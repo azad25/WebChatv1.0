@@ -20,10 +20,7 @@ async def process_request():
         return jsonify({"error": "Query is required"}), 400
 
     try:
-        # Step 1: Process with Llama"
         final_response = await process_with_llm(user_query, geminiModel)
-        # Step 3: Generate final response
-        # final_response = await generate_response(llm_response, geminiModel)
 
         return jsonify(final_response)
     except Exception as e:
@@ -35,6 +32,10 @@ def clear_context():
     clear_history()
     chat_context.clear()  # Clear the chat context
     return jsonify({"message": "Chat context cleared successfully."}), 200
+
+@app.route("/api/get_conversation_history", methods=["GET"])
+def get_conversation_history():
+    return jsonify(chat_context), 200
 
 @app.route("/api/action", methods=["POST"])
 def handle_action():

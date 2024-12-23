@@ -4,9 +4,8 @@ import { styled } from "@mui/system";
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from "rehype-raw";
 
-
 const StyledMessageBubble = styled(Box)(({ isUser }) => ({
-  maxWidth: "70%",
+  maxWidth: "70vw",
   padding: "15px 30px",
   borderRadius: "20px",
   backgroundColor: isUser ? "#007aff" : "#b2bec3",
@@ -19,34 +18,38 @@ const StyledMessageBubble = styled(Box)(({ isUser }) => ({
   whiteSpace: 'normal'
 }));
 
-const MessageBubble = ({ isUser, text }) => {
-  const [displayedText, setDisplayedText] = useState('');
+const MessageBubble = ({ isUser, text, isNew }) => {
+  const [displayedText, setDisplayedText] = useState(isNew ? '' : text);
+  const [index, setIndex] = useState(null)
   const messageEndRef = useRef(null);
 
   useEffect(() => {
-    if (!text) return;
+    if (!text || !isNew) return;
 
-    let index = 0;
-
+    
     const displayTextAsync = async () => {
-      while (index < text.length) {
+      let key = 0;
+      while (key < text.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 0.001));
-        setDisplayedText((prev) => prev + text[index]);
-        if (messageEndRef.current) { // Check if the ref is not null
+        
+        index < text.length && setDisplayedText((prev) => prev + text[key]);
+
+        if (messageEndRef.current) {
           messageEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-        index++;
+
+        setIndex(key)
+        key++;
       }
     };
-
+    
     displayTextAsync();
-
     return () => setDisplayedText('');
-  }, [text]);
+  }, [text, isNew]);
 
   return (
     <StyledMessageBubble isUser={isUser}>
-      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{isUser ? text : displayedText}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw]} >{ isUser ? text : displayedText }</ReactMarkdown>
       <div ref={messageEndRef} />
     </StyledMessageBubble>
   );

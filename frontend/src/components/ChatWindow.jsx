@@ -7,9 +7,11 @@ import ChatAvatar from "./ChatAvatar";
 import LoadingDots from "./LoadingDots";
 import AnimatedCard from './AnimatedCard';
 import { motion } from 'framer-motion';
+import { API_ENDPOINT } from "../config/config";
 
 export default function ChatWindow() {
   const [cardData, setCardData] = useState([]);
+  const [links, setLinks] = useState([]);
   const [showSelect, setShowSelect] = useState(false);
   const [showList, setShowList] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -53,16 +55,51 @@ const handleSelect = (model) => {
 //   setSelectedModel(event.target.value);
 //   setShowSelect(false); // Hide the select box after selection
 // };
+
 const models = [
   { value: "gemini-2.0", label: "Gemini 2.0" },
   { value: "gpt-4", label: "GPT-4" },
   { value: "llama3.1", label: "LLama 3.1" },
 ];
 
+useEffect(() => {
+  const fetchConversationHistory = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(API_ENDPOINT + "/api/get_conversation_history");
+      if (response.status === 200) {
+        const formattedMessages = response.data.map((message) => {
+          if (typeof message.content === "string") {
+            return {
+              text: message.content.trim(),
+              sender: message.role,
+            };
+          } else {
+            return {
+              text: message.content.response,
+              sender: message.role,
+              actions: message.content.actions || [],
+            };
+          }
+        });
+        setMessages(formattedMessages);
+      } else {
+        console.error(`Error: Received status code ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error fetching conversation history:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchConversationHistory();
+}, []);
+
 
   const fetchResponse = async (userMessage) => {
     try {
-      const response = await axios.post("http://192.168.0.107:5002/api/process", {
+      const response = await axios.post(API_ENDPOINT + "/api/process", {
         query: userMessage,
       });
       if (response.status === 200) {
@@ -92,13 +129,14 @@ const models = [
   const sendMessage = async (message) => {
     if (!message || !message.trim()) return;
 
-    const userMessage = { text: message, sender: "user" };
+    const userMessage = { text: message, sender: "user", isNew: false };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setCardData(null);
+    setLinks(null);
     setIsLoading(true);
 
-    const loadingMessage = { text: "Loading...", sender: "assistant", isLoading: true };
+    const loadingMessage = { text: "Loading...", sender: "assistant", isLoading: true, isNew: false };
     setMessages((prev) => [...prev, loadingMessage]);
 
     try {
@@ -108,6 +146,7 @@ const models = [
        
       //clear card data
       setCardData(null);
+      setLinks(null);
       if (response.length > 0) {
         if (Array.isArray(response)) {
           res = response[0];
@@ -115,15 +154,16 @@ const models = [
           res = response.text;
         }
         setCardData(res.actions);
+        setLinks(res.links);
         const assistantMessage = {
           text: res.response,
           sender: "assistant",
           actions: res.actions || [],
           images: res.images || [],
+          isNew: true,
         };
-  
-        console.log(assistantMessage);
-          setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
+
+        setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
       
       
@@ -132,6 +172,7 @@ const models = [
       const errorMessage = {
         text: "Oops, something went wrong. Please try again later.",
         sender: "assistant",
+        isNew: false,
       };
       setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
     } finally {
@@ -168,8 +209,9 @@ const models = [
 
   const newChat = async () => {
     setCardData(null);
+    setLinks(null);
     try {
-      await axios.post("http://192.168.0.107:5002/api/clear_context"); // Clear context in the backend
+      await axios.post(API_ENDPOINT + "/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
       setInput(""); // Clear the input field
       cardData = [];
@@ -184,6 +226,18 @@ const models = [
     // For example, you might want to send a message based on the action
     setCardData(null);
     sendMessage(`${action.data}`);
+  };
+
+  const handleLinkClick = (e) => {
+    let link = '';
+    if(e.target.querySelector('a')){
+      link=e.target.querySelector('a').getAttribute('href').trim();
+    }
+
+    if (link && !isLoading) {
+      setInput(link);
+      sendMessage(link);
+    }
   };
 
   useEffect(() => {
@@ -216,17 +270,24 @@ const models = [
       </Box> */}
       
       
-      <Box sx={{ flex: 1, overflowY: "auto", width: "100%", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7", color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column" }}>
+      <Box sx={{ flex: 1, overflowY: "auto", width: "100%",height:"100vh", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7", color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column",
+        scrollbarWidth: "none", // For Firefox
+        "&::-webkit-scrollbar": {
+          display: "none", // For Chrome, Safari, and Opera
+        }
+       }}>
         {messages.map((message, index) => (
-          <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: message.sender === "user" ? "flex-end" : "flex-start", marginBottom: "10px" }}>
+          <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: message.sender === "user" ? "flex-end" : "flex-start", marginBottom: "20px" }}>
             <Box sx={{
               display: "flex", alignItems: "center", justifyContent: message.sender === "user" ? "flex-end" : "flex-start", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
               color: isDarkMode ? "#007bff" : "#000000"
-            }}>
+            }} onClick={handleLinkClick}
+            >
               {message.sender != "user" ? (
                 <>
                   <ChatAvatar src="/ai-avatar.png" />
-                  {message.isLoading ? <LoadingDots /> : <MessageBubble isUser={false} text={message.text} />}
+                  {message.isLoading ? <LoadingDots /> : <MessageBubble key={index} isUser={false} text={message.text} isNew={message.isNew}/>}
+                          
                 </>
 
               ) : (
@@ -289,19 +350,55 @@ const models = [
         ))}
         <div ref={messageEndRef} />
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "left", width: "100%", marginBottom: "10px" }}>
-        {cardData && (
+      <Box
+        sx={{
+          flexDirection: "row",
+          width: "100%",
+          marginBottom: "10px",
+          overflow: "hidden",
+          overflowX: "auto", // Allow horizontal scrolling
+          scrollbarWidth: "none", // For Firefox
+          "&::-webkit-scrollbar": {
+            display: "none", // For Chrome, Safari, and Opera
+          },
+        }}
+      >
+        {links && (
+                                <motion.div
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                style={{ display:"flex",alignItems: 'left', justifyContent:"left",flexWrap: 'wrap', height: "auto", listStyleType:"none", gap:"10px", marginBottom:"10px", width:"100vw" }}
+                              >
+                                {links.map((item, index) => (
+
+                                    <motion.div 
+                                      key={index} variants={cardVariants} sx={{}}>
+                                        <li  className="reflink" onClick={handleLinkClick}>
+                                          <a sx={{
+                                            backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
+                                            color: isDarkMode ? "#007bff" : "#000000",
+                                            
+                                          }} href={item}>{item}</a>
+                                        </li>
+                                      </motion.div>
+
+                                ))}
+                              </motion.div>
+                              )
+                            }
+      {cardData && (
           <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', minWidth: '100px' }}
+          style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', width:"100vw" }}
         >
           {cardData.map((item, index) => (
             (item.type != "tools") ? (
               <motion.div 
                 key={index} variants={cardVariants}>
-                  <Button onClick={() => handleAction(item)}>
+                  <Button className="button" onClick={() => handleAction(item)} sx={{fontSize: "10px"}}>
                     <AnimatedCard key={index} title={item.label} content={''} type={item.type}/>
                   </Button>
                 </motion.div>
@@ -316,8 +413,10 @@ const models = [
           ))}
         </motion.div>
         )
-      }
+      }     
+      
       </Box>
+      
       <Box sx={{
         display: "flex", width: "100%", alignItems: "center", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
         color: isDarkMode ? "#007bff" : "#000000"

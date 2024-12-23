@@ -2,15 +2,38 @@
   margin: 0;
   padding: 0;
 }
+
+a:not(.reflink) {
+  background-color: #1969ff;
+  color: rgb(255, 255, 255);
+}
+a{
+  pointer-events: none;
+}
+.reflink a{
+  color: unset;
+  background-color: unset;
+}
+body {
+  height: 100vh;
+}
 .app{
   overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.app::-webkit-scrollbar {
+  display: none;
 }
 .chat-window {
-    width: 60%;
+    width: 100%;
     margin: 2rem auto;
     border: 1px solid #ccc;
     border-radius: 10px;
     background-color: #fefefe;
+    display: flex;
+    flex-direction: column;
+    max-height: 100vh;
   }
 
   .chat-window a{
@@ -18,7 +41,7 @@
   }
   
   .messages {
-    max-height: 100vh;
+    flex: 1;
     overflow-y: auto;
     margin-bottom: 1rem;
   }
@@ -52,6 +75,7 @@
   .input-area {
     display: flex;
     gap: 0.5rem;
+    padding: 0.5rem;
   }
 
   textarea:focus {
@@ -83,13 +107,13 @@
   /* Responsive Styles */
   @media (max-width: 768px) {
     .chat-window {
-        width: 90%;
+        width: 100%;
         margin: 1rem auto;
         padding: 0.5rem;
     }
 
     .messages {
-        max-height: 300px;
+        flex: 1;
     }
 
     .input-area {
@@ -115,13 +139,13 @@
 
   @media (max-width: 480px) {
     .chat-window {
-        width: 95%;
+        width: 100%;
         margin: 0.5rem auto;
         padding: 0.5rem;
     }
 
     .messages {
-        max-height: 250px;
+        flex: 1;
     }
 
     .input-area {
