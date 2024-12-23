@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { Box, TextField, Typography, IconButton, Button, Select, MenuItem, Paper } from "@mui/material";
 import { Settings, Send, AttachFile, Search, OpenInNew, Language, DarkMode, LightMode, Add } from "@mui/icons-material";
 import axios from "axios";
@@ -8,177 +8,95 @@ import LoadingDots from "./LoadingDots";
 import AnimatedCard from './AnimatedCard';
 import { motion } from 'framer-motion';
 import { API_ENDPOINT } from "../config/config";
+import { AppContext } from "../context/AppContext"; // Import the context
 
 export default function ChatWindow() {
-  const [cardData, setCardData] = useState([]);
-  const [links, setLinks] = useState([]);
+  const { 
+    state, 
+    isDarkMode, 
+    keywords, 
+    setKeywords, 
+    links, 
+    setLink,
+    cardData,
+    setCardData,
+    sendMessage,
+    handleAction,
+    fetchResponse,
+    messages,
+    setMessages,
+    input,
+    setInput,
+    isLoading,
+    setIsLoading,
+    selectedModel,
+    setSelectedModel,
+    handleLinkClick,
+    newChat
+   } = useContext(AppContext); // Use context
   const [showSelect, setShowSelect] = useState(false);
   const [showList, setShowList] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // State for dark mode
-  const [selectedModel, setSelectedModel] = useState("gemini-2.0"); // Default model
 
-
-  const containerVariants = {
-    hidden: { opacity: 1 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.3, // Delay between each card animation
-      },
-    },
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
   const inputRef = useRef(null);
   const messageEndRef = useRef(null);
 
   const toggleSelect = () => {
     setShowSelect((prev) => !prev);
-};
-
-const toggleList = () => {
-  setShowList((prev) => !prev);
-};
-
-const handleSelect = (model) => {
-  setSelectedModel(model);
-  setShowList(false); // Hide the list after selection
-};
-
-// const handleSelectChange = (event) => {
-//   setSelectedModel(event.target.value);
-//   setShowSelect(false); // Hide the select box after selection
-// };
-
-const models = [
-  { value: "gemini-2.0", label: "Gemini 2.0" },
-  { value: "gpt-4", label: "GPT-4" },
-  { value: "llama3.1", label: "LLama 3.1" },
-];
-
-useEffect(() => {
-  const fetchConversationHistory = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(API_ENDPOINT + "/api/get_conversation_history");
-      if (response.status === 200) {
-        const formattedMessages = response.data.map((message) => {
-          if (typeof message.content === "string") {
-            return {
-              text: message.content.trim(),
-              sender: message.role,
-            };
-          } else {
-            return {
-              text: message.content.response,
-              sender: message.role,
-              actions: message.content.actions || [],
-            };
-          }
-        });
-        setMessages(formattedMessages);
-      } else {
-        console.error(`Error: Received status code ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Error fetching conversation history:", error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  fetchConversationHistory();
-}, []);
-
-
-  const fetchResponse = async (userMessage) => {
-    try {
-      const response = await axios.post(API_ENDPOINT + "/api/process", {
-        query: userMessage,
-      });
-      if (response.status === 200) {
-        return response.data;
-      } else {
-        console.error(`Error: Received status code ${response.status}`);
-        return {
-          response: `Error: Received status code ${response.status}`,
-          actions: [],
-          images: [],
-        };
-      }
-    } catch (error) {
-      console.error("Error fetching response:", error);
-      return {
-        response: "An error occurred. Please try again later.",
-        actions: [],
-        images: [],
-      };
-    }
+  const toggleList = () => {
+    setShowList((prev) => !prev);
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
+  const handleSelect = (model) => {
+    setSelectedModel(model);
+    setShowList(false); // Hide the list after selection
   };
 
-  const sendMessage = async (message) => {
-    if (!message || !message.trim()) return;
+  // const handleSelectChange = (event) => {
+  //   setSelectedModel(event.target.value);
+  //   setShowSelect(false); // Hide the select box after selection
+  // };
 
-    const userMessage = { text: message, sender: "user", isNew: false };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setCardData(null);
-    setLinks(null);
-    setIsLoading(true);
+  const models = [
+    { value: "gemini-2.0", label: "Gemini 2.0" },
+    { value: "gpt-4", label: "GPT-4" },
+    { value: "llama3.1", label: "LLama 3.1" },
+  ];
 
-    const loadingMessage = { text: "Loading...", sender: "assistant", isLoading: true, isNew: false };
-    setMessages((prev) => [...prev, loadingMessage]);
-
-    try {
-      const response = await fetchResponse(message);
-      let res;
-       //response can be array or object
-       
-      //clear card data
-      setCardData(null);
-      setLinks(null);
-      if (response.length > 0) {
-        if (Array.isArray(response)) {
-          res = response[0];
+  useEffect(() => {
+    const fetchConversationHistory = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(API_ENDPOINT + "/api/get_conversation_history");
+        if (response.status === 200) {
+          const formattedMessages = response.data.map((message) => {
+            if (typeof message.content === "string") {
+              return {
+                text: message.content.trim(),
+                sender: message.role,
+              };
+            } else {
+              return {
+                text: message.content.response,
+                sender: message.role,
+                actions: message.content.actions || [],
+              };
+            }
+          });
+          setMessages(formattedMessages);
         } else {
-          res = response.text;
+          console.error(`Error: Received status code ${response.status}`);
         }
-        setCardData(res.actions);
-        setLinks(res.links);
-        const assistantMessage = {
-          text: res.response,
-          sender: "assistant",
-          actions: res.actions || [],
-          images: res.images || [],
-          isNew: true,
-        };
-
-        setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
+      } catch (error) {
+        console.error("Error fetching conversation history:", error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      
-    } catch (error) {
-      console.error("Error occurred:", error);
-      const errorMessage = {
-        text: "Oops, something went wrong. Please try again later.",
-        sender: "assistant",
-        isNew: false,
-      };
-      setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchConversationHistory();
+  }, []);
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
@@ -207,39 +125,6 @@ useEffect(() => {
     }
   };
 
-  const newChat = async () => {
-    setCardData(null);
-    setLinks(null);
-    try {
-      await axios.post(API_ENDPOINT + "/api/clear_context"); // Clear context in the backend
-      setMessages([]); // Clear the messages in the frontend
-      setInput(""); // Clear the input field
-      cardData = [];
-    } catch (error) {
-      console.error("Error starting new chat:", error);
-    }
-  };
-
-  const handleAction = (action) => {
-    // Implement the logic for handling the action
-    // You can add logic here to handle different action types
-    // For example, you might want to send a message based on the action
-    setCardData(null);
-    sendMessage(`${action.data}`);
-  };
-
-  const handleLinkClick = (e) => {
-    let link = '';
-    if(e.target.querySelector('a')){
-      link=e.target.querySelector('a').getAttribute('href').trim();
-    }
-
-    if (link && !isLoading) {
-      setInput(link);
-      sendMessage(link);
-    }
-  };
-
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -253,9 +138,10 @@ useEffect(() => {
       justifyContent: "space-between",
       alignItems: "center",
       width: "100%",
-      height: "100vh",
+      height: "88vh",
       overflow: "hidden",
-      backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
+      borderRadius: "10px",
+      backgroundColor: isDarkMode ? "#232323" : '#e0e0e0',
       color: isDarkMode ? "#007bff" : "#000000",
       padding: "20px",
       boxSizing: "border-box"
@@ -268,26 +154,27 @@ useEffect(() => {
           <ChatAvatar src="/ai-avatar.png" />
         </Typography>
       </Box> */}
-      
-      
-      <Box sx={{ flex: 1, overflowY: "auto", width: "100%",height:"100vh", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7", color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column",
+
+
+      <Box sx={{
+        flex: 1, overflowY: "auto", width: "100%", height: "100vh", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#232323" : '#e0e0e0', color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column",
         scrollbarWidth: "none", // For Firefox
         "&::-webkit-scrollbar": {
           display: "none", // For Chrome, Safari, and Opera
         }
-       }}>
+      }}>
         {messages.map((message, index) => (
           <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: message.sender === "user" ? "flex-end" : "flex-start", marginBottom: "20px" }}>
             <Box sx={{
-              display: "flex", alignItems: "center", justifyContent: message.sender === "user" ? "flex-end" : "flex-start", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
+              display: "flex", alignItems: "center", justifyContent: message.sender === "user" ? "flex-end" : "flex-start", backgroundColor: isDarkMode ? "#232323" : '#e0e0e0',
               color: isDarkMode ? "#007bff" : "#000000"
             }} onClick={handleLinkClick}
             >
               {message.sender != "user" ? (
                 <>
                   <ChatAvatar src="/ai-avatar.png" />
-                  {message.isLoading ? <LoadingDots /> : <MessageBubble key={index} isUser={false} text={message.text} isNew={message.isNew}/>}
-                          
+                  {message.isLoading ? <LoadingDots /> : <MessageBubble key={index} isUser={false} text={message.text} isNew={message.isNew} />}
+
                 </>
 
               ) : (
@@ -363,71 +250,71 @@ useEffect(() => {
           },
         }}
       >
-        {links && (
-                                <motion.div
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                style={{ display:"flex",alignItems: 'left', justifyContent:"left",flexWrap: 'wrap', height: "auto", listStyleType:"none", gap:"10px", marginBottom:"10px", width:"100vw" }}
-                              >
-                                {links.map((item, index) => (
-
-                                    <motion.div 
-                                      key={index} variants={cardVariants} sx={{}}>
-                                        <li  className="reflink" onClick={handleLinkClick}>
-                                          <a sx={{
-                                            backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
-                                            color: isDarkMode ? "#007bff" : "#000000",
-                                            
-                                          }} href={item}>{item}</a>
-                                        </li>
-                                      </motion.div>
-
-                                ))}
-                              </motion.div>
-                              )
-                            }
-      {cardData && (
+        {/* {links && (
           <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', width:"100vw" }}
-        >
-          {cardData.map((item, index) => (
-            (item.type != "tools") ? (
-              <motion.div 
-                key={index} variants={cardVariants}>
-                  <Button className="button" onClick={() => handleAction(item)} sx={{fontSize: "10px"}}>
-                    <AnimatedCard key={index} title={item.label} content={''} type={item.type}/>
-                  </Button>
-                </motion.div>
-            ) : (
-              <motion.div 
-                key={index} variants={cardVariants}>
-                  <Button onClick={() => newChat()}>
-                    <AnimatedCard key={index} title={item.label} content={''} type={item.type}/>
-                  </Button>
-                </motion.div>
-            )
-          ))}
-        </motion.div>
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ display: "flex", alignItems: 'left', justifyContent: "left", flexWrap: 'wrap', height: "auto", listStyleType: "none", gap: "10px", marginBottom: "10px", width: "100vw" }}
+          >
+            {links.map((item, index) => (
+
+              <motion.div
+                key={index} variants={cardVariants} sx={{}}>
+                <li className="reflink" onClick={handleLinkClick}>
+                  <a sx={{
+                    backgroundColor: isDarkMode ? "#232323" : "#f5f5f7",
+                    color: isDarkMode ? "#007bff" : "#000000",
+
+                  }} href={item}>{item}</a>
+                </li>
+              </motion.div>
+
+            ))}
+          </motion.div>
         )
-      }     
-      
+        } */}
+        {/* {cardData && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', width: "100vw" }}
+          >
+            {cardData.map((item, index) => (
+              (item.type != "tools") ? (
+                <motion.div
+                  key={index} variants={cardVariants}>
+                  <Button className="button" onClick={() => handleAction(item)} sx={{ fontSize: "10px" }}>
+                    <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={index} variants={cardVariants}>
+                  <Button onClick={() => newChat()}>
+                    <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
+                  </Button>
+                </motion.div>
+              )
+            ))}
+          </motion.div>
+        )
+        } */}
+
       </Box>
-      
+
       <Box sx={{
-        display: "flex", width: "100%", alignItems: "center", backgroundColor: isDarkMode ? "#121212" : "#f5f5f7",
-        color: isDarkMode ? "#007bff" : "#000000"
+        display: "flex", width: "100%", alignItems: "center", backgroundColor: isDarkMode ? "#232323" : "#f5f5f7",
+        color: isDarkMode ? "#007bff" : "#000000", borderRadius: "50px", padding: "10px", boxSizing: "border-box"
       }}>
-        <IconButton 
-        sx={{
-          '&.Mui-disabled': { // Background color when disabled
-            color: '#007bff', // Text color when disabled
-          },
-        }} onClick={newChat} variant="outlined" color="primary" disabled={isLoading}>
-          <Add/>
+        <IconButton
+          sx={{
+            '&.Mui-disabled': { // Background color when disabled
+              color: '#007bff', // Text color when disabled
+            },
+          }} onClick={newChat} variant="outlined" color="primary" disabled={isLoading}>
+          <Add />
         </IconButton>
         <TextField
           placeholder="Type your message..."
@@ -436,12 +323,10 @@ useEffect(() => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          sx={{ borderRadius: "5px", color: isDarkMode ? "#007bff" : "#000000", backgroundColor: "#fff" }}
+          sx={{ borderRadius: "20px", color: isDarkMode ? "#007bff" : "#000000", backgroundColor: "#fff" }}
           disabled={isLoading}
         />
-        <IconButton onClick={toggleDarkMode} color="primary" variant="outlined">
-          {isDarkMode ? <LightMode /> : <DarkMode />}
-        </IconButton>
+
         {/* <IconButton onClick={toggleList} color="primary" variant="outlined" disabled={isLoading}>
                 <Settings />
             </IconButton>
@@ -482,12 +367,12 @@ useEffect(() => {
         }} onClick={() => handleSearchWeb(input)} color="primary" disabled={isLoading}>
           <Language />
         </IconButton> */}
-        <IconButton onClick={() => sendMessage(input)} color="primary" disabled={isLoading} 
-        sx={{
-          '&.Mui-disabled': { // Background color when disabled
-            color: '#007bff', // Text color when disabled
-          },
-        }}>
+        <IconButton onClick={() => sendMessage(input)} color="primary" disabled={isLoading}
+          sx={{
+            '&.Mui-disabled': { // Background color when disabled
+              color: '#007bff', // Text color when disabled
+            },
+          }}>
           <Send />
         </IconButton>
       </Box>

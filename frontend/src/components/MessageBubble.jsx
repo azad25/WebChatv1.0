@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Box } from "@mui/material";
 import { styled } from "@mui/system";
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from "rehype-raw";
+import { AppContext } from "../context/AppContext"; // Import the context
 
 const StyledMessageBubble = styled(Box)(({ isUser }) => ({
-  maxWidth: "70vw",
+  maxWidth: "60vw",
+  width: "auto",
   padding: "15px 30px",
   borderRadius: "20px",
   backgroundColor: isUser ? "#007aff" : "#b2bec3",
@@ -19,6 +21,7 @@ const StyledMessageBubble = styled(Box)(({ isUser }) => ({
 }));
 
 const MessageBubble = ({ isUser, text, isNew }) => {
+  const { state } = useContext(AppContext); // Use context
   const [displayedText, setDisplayedText] = useState(isNew ? '' : text);
   const [index, setIndex] = useState(null)
   const messageEndRef = useRef(null);

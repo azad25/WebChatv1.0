@@ -1,10 +1,10 @@
 import React from "react";
-import ChatWindow from "./components/ChatWindow";
+import Dashboard from "./components/Dashboard/Dashboard";
 
 function App() {
   return (
     <div className="App">
-      <ChatWindow />
+      <Dashboard />
     </div>
   );
 }

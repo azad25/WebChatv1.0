@@ -1,10 +1,13 @@
 // frontend/src/components/AnimatedCard.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { Backspace, NotificationsActiveIcon } from "@mui/icons-material";
+import { AppContext } from "../context/AppContext"; // Import the context
 
 const AnimatedCard = ({ title, content, type }) => {
+  const { state } = useContext(AppContext); // Use context
+  
   const backgroundColor = type === "search" ? "#3498db" : type === "help" ? "#2ecc71" : type === "tools" ? "#e74c3c" : type === "card" ? "#fdcb6e" : "#3498db";
   return (
     <motion.div
@@ -13,7 +16,7 @@ const AnimatedCard = ({ title, content, type }) => {
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <Box sx={{
-        borderRadius: '8px',
+        borderRadius: '20px',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
         backgroundColor: backgroundColor,
@@ -22,9 +25,6 @@ const AnimatedCard = ({ title, content, type }) => {
         cursor: 'pointer',
         fontSize: "10px",
         textTransform: "capitalize",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         ":hover": {
           boxShadow: '0 4px 8px rgba(41, 128, 185, 0.3)',
           transition: 'all 0.3s ease',

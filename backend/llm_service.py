@@ -60,7 +60,8 @@ async def send_to_llm(genai_model, query):
     output_response["links"] = []
     for link in links:
         # Remove any unwanted characters or formatting issues
-        clean_link = link.strip().replace('@', '').replace(';', '').replace(')', '')
+        # clean_link = link.strip().replace('@', '').replace(';', '').replace(')', '')
+        clean_link = re.sub(r'[@;)]', '', link.strip())
         # Ensure the link is not wrapped in markdown-like syntax
         if '(' in clean_link and ')' in clean_link:
             clean_link = clean_link.split('(')[-1].split(')')[0]
@@ -138,7 +139,8 @@ def is_satisfactory(response):
 
 def parse_links(response):
     # Use a regular expression to find all URLs in the response
-    url_pattern = re.compile(r'https?://[^\s]+')
+    # This pattern accounts for markdown-like link syntax
+    url_pattern = re.compile(r'https?://[^\s\]]+')
     return url_pattern.findall(response)
 
 def remove_keywords_section(response):

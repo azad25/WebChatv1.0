@@ -10,8 +10,8 @@ const loadingAnimation = keyframes`
 
 const StyledLoadingDots = styled(Box)({
   display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
+  justifyContent: "left",
+  alignItems: "left",
   '& div': {
     width: '8px',
     height: '8px',

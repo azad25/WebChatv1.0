@@ -1,4 +1,8 @@
-Flask==2.3.3
+Flask[async]==2.3.3
 requests==2.31.0
 beautifulsoup4==4.12.2
-ollama
+flask_cors
+aiohttp
+python-dotenv
+google-generativeai
+asyncio
