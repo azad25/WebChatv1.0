@@ -20,7 +20,7 @@ function Dashboard() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.3, // Delay between each card animation
+        staggerChildren: 1, // Delay between each card animation
       },
     },
   };
@@ -63,15 +63,20 @@ function Dashboard() {
       >
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            {/* //add logo here */}
+            <IconButton edge="start" color="inherit" aria-label="menu" onClick={toggleMenu}>
+              <img src="/app.png" alt="logo" style={{ width: '4rem' }} />
+            </IconButton>
             WebChat AI v2.0
           </Typography>
-          <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={toggleMenu}>
-            <MenuIcon />
-          </IconButton>
+
           <IconButton onClick={toggleDarkMode} color="primary" variant="outlined">
             {isDarkMode ? <LightMode /> : <DarkMode />}
           </IconButton>
-          <Avatar alt="User" src="path/to/profile.jpg" />
+          <Avatar alt="User" src="/user-avatar.png" />
+          <IconButton edge="start" color="inherit" aria-label="menu" onClick={toggleMenu} sx={{ ml: 1 }}>
+            <MenuIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Grid container spacing={2} sx={{ padding: 2, height: '90vh' }}>
@@ -120,7 +125,6 @@ function Dashboard() {
             elevation={3}
             sx={{
               padding: 2,
-              
               height: '45%',
               marginBottom: '20px',
               backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
@@ -131,22 +135,26 @@ function Dashboard() {
             {isLoading && <LoadingDots />}
             {keywords && (
               <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row', alignItems: 'right' }}
+                variants={containerVariants}
+
+                style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row', alignItems: 'right' }}
               >
                 {keywords.map((item, index) => (
                   (item.type != "tools") ? (
                     <motion.div
-                      key={index} variants={cardVariants}>
+                      initial="hidden"
+                      animate="visible"
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      key={index} variants={cardVariants} >
                       <Button className="button" onClick={() => handleAction(item)} >
                         <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
                       </Button>
                     </motion.div>
                   ) : (
                     <motion.div
-                      key={index} variants={cardVariants}>
+                      key={index} variants={cardVariants} initial="hidden"
+                      animate="visible"
+                      transition={{ duration: 0.3, ease: "easeInOut" }}>
                       <Button onClick={() => newChat()}>
                         <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
                       </Button>
@@ -173,16 +181,19 @@ function Dashboard() {
             {isLoading && <LoadingDots />}
             {links && (
               <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              style={{ display: "flex", flexDirection: "column", alignItems: 'left', justifyContent: "left", flexWrap: 'wrap', height: "auto", listStyleType: "none", gap: "10px", marginBottom: "10px" }}
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+
+                style={{ display: "flex", flexDirection: "column", alignItems: 'left', justifyContent: "left", flexWrap: 'wrap', height: "auto", listStyleType: "none", gap: "10px", marginBottom: "10px" }}
               >
                 <Typography variant="h6">Related links</Typography>
                 {links.map((item, index) => (
 
                   <motion.div
-                    key={index} variants={cardVariants} sx={{}}>
+                    key={index} variants={cardVariants} initial="hidden"
+                    animate="visible"
+                    transition={{ duration: 0.3, ease: "easeInOut" }}>
                     <li className="reflink" onClick={handleLinkClick}>
                       <a sx={{
                         backgroundColor: isDarkMode ? "#2f3640" : "#f5f5f7",

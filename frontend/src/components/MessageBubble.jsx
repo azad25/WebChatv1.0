@@ -7,7 +7,6 @@ import { AppContext } from "../context/AppContext"; // Import the context
 
 const StyledMessageBubble = styled(Box)(({ isUser }) => ({
   maxWidth: "70%",
-  width: "70%",
   padding: "15px 30px",
   borderRadius: "20px",
   backgroundColor: isUser ? "#007aff" : "#b2bec3",
@@ -52,7 +51,7 @@ const MessageBubble = ({ isUser, text, isNew }) => {
 
   return (
     <StyledMessageBubble isUser={isUser}>
-      <ReactMarkdown rehypePlugins={[rehypeRaw]} >{ isUser ? text : displayedText }</ReactMarkdown>
+      <ReactMarkdown sx={{maxWidth: "50%"}} rehypePlugins={[rehypeRaw]} >{ isUser ? text : displayedText }</ReactMarkdown>
       <div ref={messageEndRef} />
     </StyledMessageBubble>
   );
