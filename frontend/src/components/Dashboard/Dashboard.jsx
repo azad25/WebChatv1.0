@@ -4,6 +4,7 @@ import Grid from '@mui/material/Grid/Grid';
 import { Menu as MenuIcon, DarkMode, LightMode } from '@mui/icons-material';
 import ChatWindow from '../ChatWindow';
 import { AppContext } from "../../context/AppContext"; // Import the context
+import { WebSocketContext } from "../../context/WebSocketContext"; // Import the context
 import PopupMenu from '../PopupMenu';
 import { motion } from 'framer-motion';
 import AnimatedCard from '../AnimatedCard';

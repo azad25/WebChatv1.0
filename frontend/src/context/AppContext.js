@@ -1,11 +1,12 @@
-// frontend/src/context/AppContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_ENDPOINT } from '../config/config';
+import { WebSocketProvider, useWebSocket } from './WebSocketContext';
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const { socket } = useWebSocket() || {};
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [keywords, setKeywords] = useState([]);
   const [links, setLinks] = useState([]);
@@ -14,19 +15,16 @@ export const AppProvider = ({ children }) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel] = useState("gemini-2.0");
+  const [response, setResponse] = useState([]);
 
-  const [state, setState] = useState({
-    isDarkMode: false,
-    selectedModel: 'gemini-2.0',
-    // Add other global states here
-  });
+  const [state, setState] = useState({});
 
   useEffect(() => {
     const savedKeywords = localStorage.getItem('keywords');
     const savedLinks = localStorage.getItem('links');
     const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedKeywords) setKeywords(JSON.parse(savedKeywords));
-    if (savedLinks) setLinks(JSON.parse(savedLinks));
+    if (savedKeywords.length) setKeywords(JSON.parse(savedKeywords));
+    if (savedLinks.length) setLinks(JSON.parse(savedLinks));
     if (savedDarkMode) setIsDarkMode(savedDarkMode);
   }, [setKeywords, setLinks, setIsDarkMode]);
 
@@ -36,6 +34,56 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('keywords', JSON.stringify(keywords));
     localStorage.setItem('darkMode', isDarkMode);
   }, [keywords, links, isDarkMode]);
+
+
+  const fetchConversationHistory = (messages) => {
+    const formattedMessages = messages && messages.map((message) => {
+      if (message && typeof message.content === "string") {
+        return {
+          text: message.content.trim(),
+          sender: message.role,
+        };
+      } else {
+        if (messages && messages.length > 0) {
+          return {
+            text: message.content ? message.content.response : message.response,
+            sender: message.role,
+            actions: message.content ? message.content.actions || [] : message.actions,
+          };
+        }
+      }
+    });
+    setIsLoading(false)
+    return formattedMessages;
+  };
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('response', (data) => {
+        console.log('Received data from socket:', data);
+        setResponse(data);
+      });
+    }
+    return () => {
+      if (socket) {
+        socket.off('response');
+      }
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (response) {
+      console.log('messages: ', response);
+      const formattedMessages = fetchConversationHistory(response);
+      setMessages((prevMessages) => [...prevMessages, ...formattedMessages]);
+    }
+  }, [response]);
+
+  useEffect(() => {
+    if (messages) {
+      console.log('messages: ', messages);
+    }
+  }, [messages]);
 
   const handleLinkClick = (e) => {
     let link = '';
@@ -59,27 +107,52 @@ export const AppProvider = ({ children }) => {
 
   const fetchResponse = async (userMessage) => {
     try {
-      const response = await axios.post(API_ENDPOINT + "/api/process", {
-        query: userMessage,
-      });
-      if (response.status === 200) {
-        return response.data;
-      } else {
-        console.error(`Error: Received status code ${response.status}`);
-        return {
-          response: `Error: Received status code ${response.status}`,
-          actions: [],
-          images: [],
-        };
+      // try {
+      if (userMessage) {
+        socket.emit('send_message', userMessage);
+      }
+      if (socket) {
+        socket.on('response', (data) => {
+          setResponse(data);
+          setIsLoading(false);
+          if (data) {
+            setCardData(null);
+            let res;
+            if (data && data.length > 0) {
+              res = data[0];
+            } else {
+              res = data;
+            }
+            if (res) {
+              setCardData(res.actions);
+              setKeywords((prevKeywords) => Array(res.actions).length > 0 ? res.actions : prevKeywords);
+              setLinks((prevLinks) => Array(res.links).length > 0 ? res.links : prevLinks);
+              const assistantMessage = {
+                text: res.response,
+                sender: "assistant",
+                actions: res.actions || [],
+                isNew: true,
+              };
+              setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
+              setResponse(null);
+            }
+            return data;
+          } else {
+            console.error(`Error: Received status code ${response.status}`);
+            return {
+              response: `Error: Received status code ${response.status}`,
+              actions: [],
+              images: [],
+            };
+          }
+        });
       }
     } catch (error) {
-      console.error("Error fetching response:", error);
-      return {
-        response: "An error occurred. Please try again later.",
-        actions: [],
-        images: [],
-      };
+      console.error("Error fetching conversation history:", error);
+    } finally {
+      setIsLoading(false);
     }
+
   };
 
   const sendMessage = async (message) => {
@@ -88,50 +161,11 @@ export const AppProvider = ({ children }) => {
     const userMessage = { text: message, sender: "user", isNew: false };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    setIsLoading(true);
 
     const loadingMessage = { text: "Loading...", sender: "assistant", isLoading: true, isNew: false };
     setMessages((prev) => [...prev, loadingMessage]);
 
-    try {
-      const response = await fetchResponse(message);
-      let res;
-      //response can be array or object
-
-      //clear card data
-      setCardData(null);
-      if (response.length > 0) {
-        if (Array.isArray(response)) {
-          res = response[0];
-        } else {
-          res = response.text;
-        }
-        setCardData(res.actions);
-        setKeywords(Array(res.actions).length > 0 ? res.actions : keywords);
-        setLinks(Array(res.links).length > 0 ? res.links : links);
-        const assistantMessage = {
-          text: res.response,
-          sender: "assistant",
-          actions: res.actions || [],
-          images: res.images || [],
-          isNew: true,
-        };
-
-        setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
-      }
-
-
-    } catch (error) {
-      console.error("Error occurred:", error);
-      const errorMessage = {
-        text: "Oops, something went wrong. Please try again later.",
-        sender: "assistant",
-        isNew: false,
-      };
-      setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    await fetchResponse(message);
   };
 
   const newChat = async () => {
@@ -141,11 +175,17 @@ export const AppProvider = ({ children }) => {
       await axios.post(API_ENDPOINT + "/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
       setInput(""); // Clear the input field
-      cardData = [];
     } catch (error) {
       console.error("Error starting new chat:", error);
     }
   };
+
+  // useEffect(() => {
+  //   if(response) {
+  //     let res = fetchConversationHistory(response)
+  //     setMessages((prev) => [...prev, ...res])
+  //   }
+  // }, [response])
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
@@ -159,8 +199,10 @@ export const AppProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ state, isDarkMode, setIsDarkMode ,toggleDarkMode, keywords, setKeywords, links, setLinks, handleAction, sendMessage, messages, setMessages, cardData, setCardData, fetchResponse, input, setInput, isLoading, setIsLoading, selectedModel, setSelectedModel, handleLinkClick, handleAction, newChat }}>
-      {children}
+    <AppContext.Provider value={{ socket, state, isDarkMode, setIsDarkMode, toggleDarkMode, keywords, setKeywords, links, setLinks, handleAction, sendMessage, messages, setMessages, cardData, setCardData, fetchResponse, input, setInput, isLoading, setIsLoading, selectedModel, setSelectedModel, handleLinkClick, handleAction, newChat, fetchConversationHistory, response }}>
+      <WebSocketProvider>
+        {children}
+      </WebSocketProvider>
     </AppContext.Provider>
   );
 };

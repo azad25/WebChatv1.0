@@ -46,7 +46,7 @@ async def send_to_llm(genai_model, query):
     full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
     
     prompt = """"
-        Respond fast as "Sir" and then response with details with a title based on the user query and perform any action if needed. Give sample code needed if any query on programming terms.Conclude with a list of related links for further exploration and the chat history if asked for details:"""+full_prompt+"and then MUST Extract minimum 5 or more,numbered list of related keywords to your response. Give response like smart assistant and don't include what i asked to do in the response"
+        Respond fast as "Sir" and then response with details with a title based on the user query and perform any action if needed. Give sample code needed if any query on programming terms.Conclude with a list of related links for further exploration based on this chat history:"""+full_prompt+"and then MUST Extract minimum 5 or more,numbered list of related keywords to your response. Give response like smart assistant and don't include what i asked to do in the response"
     
     response = genai_model.send_message(prompt)
     links = parse_links(response.text)

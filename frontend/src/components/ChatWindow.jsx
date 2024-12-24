@@ -13,26 +13,16 @@ import { AppContext } from "../context/AppContext"; // Import the context
 export default function ChatWindow() {
   const { 
     state, 
-    isDarkMode, 
-    keywords, 
-    setKeywords, 
-    links, 
-    setLink,
-    cardData,
-    setCardData,
+    isDarkMode,
     sendMessage,
-    handleAction,
-    fetchResponse,
     messages,
-    setMessages,
     input,
     setInput,
     isLoading,
-    setIsLoading,
-    selectedModel,
     setSelectedModel,
     handleLinkClick,
-    newChat
+    newChat,
+    fetchConversationHistory
    } = useContext(AppContext); // Use context
   const [showSelect, setShowSelect] = useState(false);
   const [showList, setShowList] = useState(false);
@@ -63,40 +53,6 @@ export default function ChatWindow() {
     { value: "gpt-4", label: "GPT-4" },
     { value: "llama3.1", label: "LLama 3.1" },
   ];
-
-  useEffect(() => {
-    const fetchConversationHistory = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(API_ENDPOINT + "/api/get_conversation_history");
-        if (response.status === 200) {
-          const formattedMessages = response.data.map((message) => {
-            if (typeof message.content === "string") {
-              return {
-                text: message.content.trim(),
-                sender: message.role,
-              };
-            } else {
-              return {
-                text: message.content.response,
-                sender: message.role,
-                actions: message.content.actions || [],
-              };
-            }
-          });
-          setMessages(formattedMessages);
-        } else {
-          console.error(`Error: Received status code ${response.status}`);
-        }
-      } catch (error) {
-        console.error("Error fetching conversation history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchConversationHistory();
-  }, []);
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
@@ -184,55 +140,6 @@ export default function ChatWindow() {
                 </>
               )}
             </Box>
-            {/* {Array.isArray(message.actions) && message.actions.length > 0 && (
-              <Box sx={{ display: "flex", flexWrap: "wrap", flexDirection: "row", marginTop: "10px", gap: "4px" }}>
-                {message.actions.map((action, index) => (
-                  
-                  action.type === "card" ? (
-                    <Button
-                    disabled={isLoading}
-                    key={index}
-                    onClick={() => handleAction(action)}  // Handle action click
-                    variant="contained"
-                    sx={{ borderRadius: "20px", padding: "2px 5px", fontSize: "10px", backgroundColor: "#e74c3c", color: "white" }}  // Smaller button styles
-                  >
-                    {action.label.trim()}
-                  </Button>
-                  ) : 
-                  action.type === "help" ? (
-                  <Button
-                    disabled={isLoading}
-                    key={index}
-                    onClick={() => handleAction(action)}  // Handle action click
-                    variant="contained"
-                    sx={{ borderRadius: "20px", padding: "2px 5px", fontSize: "10px", backgroundColor: "#2ecc71", color: "white" }}  // Smaller button styles
-                  >
-                    {action.label.trim()}
-                  </Button>) :
-                  action.type === "tools" && (
-                    <Button
-                    disabled={isLoading}
-                    key={index}
-                    onClick={() => handleAction(action)}  // Handle action click
-                    variant="contained"
-                    sx={{ borderRadius: "10px", padding: "2px 5px", fontSize: "10px", backgroundColor: "#f1c40f", color: "black" }}  // Smaller button styles
-                  >
-                    {action.label.trim()}
-                  </Button>
-                  )
-                  // <Button
-                  //   disabled={isLoading}
-                  //   key={index}
-                  //   onClick={() => handleAction(action)}  // Handle action click
-                  //   variant="contained"
-                  //   color="primary"
-                  //   sx={{ borderRadius: "10px", padding: "2px 5px", fontSize: "10px" }}  // Smaller button styles
-                  // >
-                  //   {action.label.trim()}
-                  // </Button>
-                ))}
-              </Box>
-            )} */}
           </Box>
         ))}
         <div ref={messageEndRef} />
@@ -250,58 +157,6 @@ export default function ChatWindow() {
           },
         }}
       >
-        {/* {links && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            style={{ display: "flex", alignItems: 'left', justifyContent: "left", flexWrap: 'wrap', height: "auto", listStyleType: "none", gap: "10px", marginBottom: "10px", width: "100vw" }}
-          >
-            {links.map((item, index) => (
-
-              <motion.div
-                key={index} variants={cardVariants} sx={{}}>
-                <li className="reflink" onClick={handleLinkClick}>
-                  <a sx={{
-                    backgroundColor: isDarkMode ? "#232323" : "#f5f5f7",
-                    color: isDarkMode ? "#007bff" : "#000000",
-
-                  }} href={item}>{item}</a>
-                </li>
-              </motion.div>
-
-            ))}
-          </motion.div>
-        )
-        } */}
-        {/* {cardData && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'flex', flexDirection: 'row', alignItems: 'right', width: "100vw" }}
-          >
-            {cardData.map((item, index) => (
-              (item.type != "tools") ? (
-                <motion.div
-                  key={index} variants={cardVariants}>
-                  <Button className="button" onClick={() => handleAction(item)} sx={{ fontSize: "10px" }}>
-                    <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={index} variants={cardVariants}>
-                  <Button onClick={() => newChat()}>
-                    <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
-                  </Button>
-                </motion.div>
-              )
-            ))}
-          </motion.div>
-        )
-        } */}
-
       </Box>
 
       <Box sx={{

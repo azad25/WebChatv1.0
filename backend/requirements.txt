@@ -6,3 +6,4 @@ aiohttp
 python-dotenv
 google-generativeai
 asyncio
+flask-socketio

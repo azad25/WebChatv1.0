@@ -6,8 +6,8 @@ import rehypeRaw from "rehype-raw";
 import { AppContext } from "../context/AppContext"; // Import the context
 
 const StyledMessageBubble = styled(Box)(({ isUser }) => ({
-  maxWidth: "60vw",
-  width: "auto",
+  maxWidth: "70%",
+  width: "70%",
   padding: "15px 30px",
   borderRadius: "20px",
   backgroundColor: isUser ? "#007aff" : "#b2bec3",
