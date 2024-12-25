@@ -10,30 +10,59 @@ export const AppProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [keywords, setKeywords] = useState([]);
   const [links, setLinks] = useState([]);
+  const [images, setImages] = useState([]);
   const [cardData, setCardData] = useState([]);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel] = useState("gemini-2.0");
   const [response, setResponse] = useState([]);
+  const [ isAlive, setIsAlive ] = useState(true);
 
   const [state, setState] = useState({});
 
   useEffect(() => {
-    const savedKeywords = localStorage.getItem('keywords');
-    const savedLinks = localStorage.getItem('links');
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedKeywords.length) setKeywords(JSON.parse(savedKeywords));
-    if (savedLinks.length) setLinks(JSON.parse(savedLinks));
-    if (savedDarkMode) setIsDarkMode(savedDarkMode);
-  }, [setKeywords, setLinks, setIsDarkMode]);
+    let savedKeywords = [];
+    let savedLinks = [];
+    let savedImages = [];
+    let savedDarkMode = false;
+
+    try {
+        const keywords = localStorage.getItem('keywords');
+        savedKeywords = keywords ? JSON.parse(keywords) : [];
+    } catch {
+        savedKeywords = []; // Default to empty array on error
+    }
+
+    try {
+        const links = localStorage.getItem('links');
+        savedLinks = links ? JSON.parse(links) : [];
+    } catch {
+        savedLinks = []; // Default to empty array on error
+    }
+
+    try {
+      const images = localStorage.getItem('images');
+      savedImages = images ? JSON.parse(images) : [];
+  } catch {
+      savedImages = []; // Default to empty array on error
+  }
+
+    savedDarkMode = localStorage.getItem('darkMode') === 'true'; // Ensure it's a boolean
+
+    if (savedKeywords && savedKeywords.length) setKeywords(savedKeywords);
+    if (savedLinks && savedLinks.length) setLinks(savedLinks);
+    if (savedImages && savedImages.length) setImages(savedImages);
+    if (isDarkMode === savedDarkMode) setIsDarkMode(savedDarkMode)
+  }, [setKeywords, setLinks, setImages, setIsDarkMode]);
 
   // Save keywords and links to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('links', JSON.stringify(links));
     localStorage.setItem('keywords', JSON.stringify(keywords));
+    localStorage.setItem('images', JSON.stringify(images));
     localStorage.setItem('darkMode', isDarkMode);
-  }, [keywords, links, isDarkMode]);
+  }, [keywords, links, images, isDarkMode]);
 
 
   const fetchConversationHistory = (messages) => {
@@ -59,31 +88,37 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (socket) {
+      // Listen for "ping" messages from the server
+      socket.on('disconnect', () => {
+        setIsAlive(false);
+      });
+      socket.on('ping', (data) => {
+        setIsAlive(true);
+        // Respond with a "pong"
+        socket.emit('pong', { message: 'pong' });
+      });
       socket.on('response', (data) => {
-        console.log('Received data from socket:', data);
         setResponse(data);
       });
     }
+
+    
+
     return () => {
       if (socket) {
         socket.off('response');
       }
     };
-  }, [socket]);
+  }, [socket, isAlive]);
 
   useEffect(() => {
     if (response) {
-      console.log('messages: ', response);
       const formattedMessages = fetchConversationHistory(response);
       setMessages((prevMessages) => [...prevMessages, ...formattedMessages]);
     }
   }, [response]);
 
-  useEffect(() => {
-    if (messages) {
-      console.log('messages: ', messages);
-    }
-  }, [messages]);
+
 
   const handleLinkClick = (e) => {
     let link = '';
@@ -127,6 +162,7 @@ export const AppProvider = ({ children }) => {
               setCardData(res.actions);
               setKeywords((prevKeywords) => Array(res.actions).length > 0 ? res.actions : prevKeywords);
               setLinks((prevLinks) => Array(res.links).length > 0 ? res.links : prevLinks);
+              setImages((prevImages) => Array(res.images).length > 0 ? res.images : prevImages);
               const assistantMessage = {
                 text: res.response,
                 sender: "assistant",
@@ -169,8 +205,8 @@ export const AppProvider = ({ children }) => {
   };
 
   const newChat = async () => {
-    setKeywords(null);
-    setLinks(null);
+    // setKeywords(null);
+    // setLinks(null);
     try {
       await axios.post(API_ENDPOINT + "/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
@@ -187,10 +223,6 @@ export const AppProvider = ({ children }) => {
   //   }
   // }, [response])
 
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-  };
-
   const setSelectedModel = (model) => {
     setState((prevState) => ({
       ...prevState,
@@ -199,7 +231,7 @@ export const AppProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ socket, state, isDarkMode, setIsDarkMode, toggleDarkMode, keywords, setKeywords, links, setLinks, handleAction, sendMessage, messages, setMessages, cardData, setCardData, fetchResponse, input, setInput, isLoading, setIsLoading, selectedModel, setSelectedModel, handleLinkClick, handleAction, newChat, fetchConversationHistory, response }}>
+    <AppContext.Provider value={{ isAlive, setIsAlive , socket, state, isDarkMode, setIsDarkMode, keywords, setKeywords, links, setLinks, handleAction, sendMessage, messages, setMessages, cardData, setCardData, fetchResponse, input, setInput, isLoading, setIsLoading, selectedModel, setSelectedModel, handleLinkClick, handleAction, newChat, fetchConversationHistory, response, images, setImages }}>
       <WebSocketProvider>
         {children}
       </WebSocketProvider>

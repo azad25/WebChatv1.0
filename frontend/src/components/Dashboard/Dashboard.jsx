@@ -4,14 +4,15 @@ import Grid from '@mui/material/Grid/Grid';
 import { Menu as MenuIcon, DarkMode, LightMode } from '@mui/icons-material';
 import ChatWindow from '../ChatWindow';
 import { AppContext } from "../../context/AppContext"; // Import the context
-import { WebSocketContext } from "../../context/WebSocketContext"; // Import the context
 import PopupMenu from '../PopupMenu';
 import { motion } from 'framer-motion';
 import AnimatedCard from '../AnimatedCard';
 import LoadingDots from '../LoadingDots';
+import ImageSlider from './imageSlider';
+import StatusBar from './Statusbar';
 
 function Dashboard() {
-  const { state, toggleDarkMode, isDarkMode, isLoading, handleLinkClick, handleAction, setIsDarkMode } = useContext(AppContext);
+  const { state, isDarkMode, isLoading, handleLinkClick, handleAction, setIsDarkMode, images, isAlive } = useContext(AppContext);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -28,6 +29,11 @@ function Dashboard() {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
+  };
+
+  const toggleDarkMode = () => {
+    localStorage.setItem('darkMode', isDarkMode)
+    setIsDarkMode((prev) => !prev);
   };
 
   const toggleMenu = () => {
@@ -92,30 +98,30 @@ function Dashboard() {
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <Typography variant="h6">26 C Sunny</Typography>
-            <Typography variant="body2">Mostly Sunny</Typography>
+            <Box>
+              <StatusBar/>
+            </Box>
+
+
           </Paper>
           <Paper
             elevation={3}
             sx={{
               padding: 2,
-              height: '45%',
+              height: "45%",
               backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <ol>
-              <li>Headline 1</li>
-              <li>Headline 2</li>
-              <li>Headline 3</li>
-            </ol>
-
-            <Typography variant="h6">Trending keywords</Typography>
+            <Typography variant="h6"></Typography>
+            {images && images.length > 0 && (
+              <ImageSlider images={images} isDarkMode={isDarkMode} />
+            )}
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <ChatWindow />
+          <ChatWindow style={{height: '90%'}} />
           {/* <Paper elevation={3} sx={{ padding: 2, height: '98%' }}>
           </Paper> */}
         </Grid>
@@ -124,9 +130,8 @@ function Dashboard() {
           <Paper
             elevation={3}
             sx={{
-              padding: 2,
               height: '45%',
-              marginBottom: '20px',
+              mb: "20px",
               backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
@@ -136,8 +141,7 @@ function Dashboard() {
             {keywords && (
               <motion.div
                 variants={containerVariants}
-
-                style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row', alignItems: 'right' }}
+                style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row', alignItems: 'right', padding: 20 }}
               >
                 {keywords.map((item, index) => (
                   (item.type != "tools") ? (
@@ -164,13 +168,29 @@ function Dashboard() {
               </motion.div>
             )
             }
+            {/* {images && (
+              <motion.div
+                variants={containerVariants}
+                style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'left' }}
+              >
+                {images.map((item, index) => (
+                    <motion.div
+                      key={index} variants={cardVariants} initial="hidden"
+                      animate="visible"
+                      transition={{ duration: 0.3, ease: "easeIn" }}>
+                      <img src={item.url} alt="img" style={{ maxWidth: '100px', height: 'auto', margin: '10px' }} />
+                    </motion.div>
+                ))}
+              </motion.div>
+            )
+            } */}
+
           </Paper>
           <Paper
             elevation={3}
             sx={{
               padding: 2,
               height: '45%',
-              maxHeight: '45%',
               overflow: "hidden",
               overflowY: "auto",
               backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',

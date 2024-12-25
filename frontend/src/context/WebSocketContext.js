@@ -7,7 +7,7 @@ const WebSocketContext = createContext();
 
 export const WebSocketProvider = ({ children }) => {
     const socket = useRef(null);
-    const { fetchConversationHistory, setIsLoading } = useContext(AppContext); // Use context
+    const { fetchConversationHistory, setIsLoading, setIsAlive } = useContext(AppContext); // Use context
     useEffect(() => {
         // Connect to the WebSocket server
         socket.current = io(API_ENDPOINT);
@@ -24,6 +24,7 @@ export const WebSocketProvider = ({ children }) => {
 
         socket.current.on('disconnect', () => {
             console.log('Disconnected from WebSocket');
+            setIsAlive(false);
         });
 
         // Cleanup on unmount

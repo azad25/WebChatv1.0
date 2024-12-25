@@ -21,7 +21,7 @@ const AnimatedCard = ({ title, content, type }) => {
         overflow: 'hidden',
         backgroundColor: backgroundColor,
         color: backgroundColor === "#fdcb6e" ? 'black' : 'white',
-        padding: '5px 15px',
+        padding: '5px 10px',
         cursor: 'pointer',
         fontSize: "10px",
         textTransform: "capitalize",
@@ -33,7 +33,7 @@ const AnimatedCard = ({ title, content, type }) => {
       }}>
         <Typography variant="body2" sx={{display: "flex", alignItems: "center", gap: "5px"}}>
           <Typography variant="p">
-            {title}
+            {type != "tools" && title} 
           </Typography>
           {type === "tools" && <Backspace/>} 
         </Typography>

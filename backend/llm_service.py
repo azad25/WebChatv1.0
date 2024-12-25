@@ -3,9 +3,26 @@ import re
 import asyncio
 from action_service import parse_keywords
 from context import chat_context
-
+import json
+import redis
 # Initialize conversation history
 conversation_history = chat_context
+
+# Initialize Redis client
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+
+def cache_response(key, data, expiration=300):
+    """Cache the response in Redis with an expiration time."""
+    # Serialize the data to JSON before caching
+    redis_client.setex(key, expiration, json.dumps(data))
+
+def get_cached_response(key):
+    """Retrieve cached response from Redis."""
+    cached_data = redis_client.get(key)
+    if cached_data:
+        # Deserialize the JSON string back to a Python object
+        return json.loads(cached_data)
+    return None
 
 
 async def process_with_llm(query, genai_model):
@@ -22,16 +39,41 @@ async def process_with_llm(query, genai_model):
 
 async def send_to_llm(genai_model, query):
     contents = ""
-
-         # Use a compiled regular expression for better performance
+    # Retrieve cached images
+    cached_images = get_cached_response('images')
+    images = []
+    # Use a compiled regular expression for better performance
     url_pattern = re.compile(r'(https?://[^\s]+)')
     urls = url_pattern.findall(query)
     # Fetch data concurrently for all URLs
     prompt = ''
     if urls:
         search = 1
-        fetch_tasks = [fetch_web_data(url) for url in urls]
-        contents = await asyncio.gather(*fetch_tasks)
+        # fetch_tasks = [fetch_web_data(url).text for url in urls]
+        fetch_results = await asyncio.gather(*[fetch_web_data(url) for url in urls])
+        # contents = await asyncio.gather(*fetch_tasks)
+        # images = await asyncio.gather(*fetch_images)
+        # Separate the results into contents and images
+        contents = []
+        images = []
+        for result in fetch_results:
+            if result and isinstance(result, dict):
+                if result.get("text"):
+                    contents.append(result["text"])
+                if result.get("images"):
+                    images.extend(result["images"])
+        
+        # Cache the images list
+        cache_response('images', images)  # Serialize once
+
+
+        # cache_response(images, json.dumps(json.dumps(images)))
+        # cached_images = get_cached_response(images)
+        # print(cached_images)
+
+        # contents = [result.text for result in fetch_results if result and hasattr(result, 'text')]
+        # images = [result.images for result in fetch_results if result and hasattr(result, 'images')]
+        
         # Combine user query with fetched content
         prompt = query + "\n" + "\n".join(filter(None, contents))
         # Check if any content was fetched successfully
@@ -46,7 +88,7 @@ async def send_to_llm(genai_model, query):
     full_prompt = "\n\n".join(f"{msg['role'].capitalize()}: {msg['content']}" for msg in conversation_history)
     
     prompt = """"
-        Respond fast as "Sir" and then response with details with a title based on the user query and perform any action if needed. Give sample code needed if any query on programming terms.Conclude with a list of related links for further exploration based on this chat history:"""+full_prompt+"and then MUST Extract minimum 5 or more,numbered list of related keywords to your response. Give response like smart assistant and don't include what i asked to do in the response"
+        Respond fast as "Sir" and then response with details with a title based on the user query and perform any action if needed.Conclude with a big list of related and reference valid links and then MUST Extract a numbered list of keywords about the topic to your response also add keywords about previous chat history. Give response like smart assistant and don't include what i asked to do in the response and add more links for further exploration based on this chat history:"""+full_prompt+""
     
     response = genai_model.send_message(prompt)
     links = parse_links(response.text)
@@ -67,12 +109,16 @@ async def send_to_llm(genai_model, query):
             clean_link = clean_link.split('(')[-1].split(')')[0]
         output_response["links"].append(clean_link)
 
+    cache_response('links', output_response["links"])
+    cached_links = get_cached_response('links')
+
     for keyword in keywords:
             output_response["actions"].append({
                 "label": f"'{keyword.strip()}'",
                 "type": "search",
-                "data": keyword.strip()
+                "data": "Search for: " + keyword.strip()
             })
+    
         
     output_response["actions"].append({
             "label": "Summarize",
@@ -89,14 +135,22 @@ async def send_to_llm(genai_model, query):
     output_response["actions"].append({
             "label": "News Update Today",
             "type": "card",
-            "data": "List top headlines from BBC, CNN, Reuters,Bdnews24.com"
+            "data": "List Top Headlines fromhttps://aljazeera.com/news"
         })
+
+    cache_response('keywords', output_response["actions"])
+    cached_keywords = get_cached_response('keywords')
 
     output_response["actions"].append({
             "label": "Clear Chat",
             "type": "tools",
             "data": "Clear the chat history"
         })
+    
+    output_response["images"] = cached_images
+    output_response["links"] = cached_links
+    output_response["actions"] = cached_keywords
+
 
 
         # Limit the number of refinement iterations
@@ -128,7 +182,7 @@ async def send_to_llm(genai_model, query):
 #                     refined_response_content  # Return the satisfactory refined response
 #                 )
 
-    conversation_history.append({"role": "assistant", "content": output_response})
+    conversation_history.append({"role": "assistant", "content": output_response},)
     return output_response
 
 def is_satisfactory(response):
@@ -141,8 +195,11 @@ def parse_links(response):
     # Use a regular expression to find all URLs in the response
     # This pattern accounts for markdown-like link syntax
     url_pattern = re.compile(r'https?://[^\s\]]+')
-    return url_pattern.findall(response)
+    links = url_pattern.findall(response)
 
+    # Remove duplicates by converting the list to a set and back to a list
+    unique_links = list(set(links))
+    return unique_links
 def remove_keywords_section(response):
     # Find the index where the "Keywords:" section starts
     keywords_index =  response.find("Keywords")

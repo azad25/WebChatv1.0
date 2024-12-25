@@ -62,6 +62,12 @@ async def request_keywords_from_llm(prompt, genai_model):
     except Exception as e:
         print(f"Error requesting keywords from LLM: {e}")
         return ""
+    
+def strip_characters(input_string):
+    chars_to_strip = """ !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~0123456789"""
+    translation_table = str.maketrans("", "", chars_to_strip)
+    return input_string.translate(translation_table)
+
 
 def parse_keywords(keyword_response):
     # Ensure keyword_response is a string
@@ -78,6 +84,7 @@ def parse_keywords(keyword_response):
         if line.strip() and line.strip()[0].isdigit() and line.strip()[1] == '.':
             # Extract the keyword after the number and period
             keyword = line.strip().split('.', 1)[1].strip()
+            # keyword = strip_characters(keyword)
             # Ensure the keyword is 1 or 2 words long
             if 1 <= len(keyword.split()) <= 2:
                 keywords.append(keyword)

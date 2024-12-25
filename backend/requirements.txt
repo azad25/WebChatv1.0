@@ -7,3 +7,6 @@ python-dotenv
 google-generativeai
 asyncio
 flask-socketio
+brotli
+aiohttp-retry
+redis

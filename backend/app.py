@@ -5,13 +5,22 @@ from llm_service import process_with_llm
 from context import chat_context
 from genaimodel import geminiModel,clear_history
 from flask_socketio import SocketIO, emit
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime
+
 import asyncio
+import threading
 
 app = Flask(__name__)
 CORS(app)
 # Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*")  # Allow CORS for all origins
-
+# Emit a "ping" message every 10 seconds
+def ping_clients():
+    while True:
+        socketio.emit('ping', {'message': 'ping'})
+        socketio.sleep(5)
 # WebSocket event example
 @socketio.on('connect')
 def handle_connect():
@@ -91,4 +100,5 @@ def handle_action():
         return jsonify({"error": "Invalid action type."}), 400
 
 if __name__ == "__main__":
+    threading.Thread(target=ping_clients).start()
     socketio.run(app, host='0.0.0.0', debug=True, port=5002)
