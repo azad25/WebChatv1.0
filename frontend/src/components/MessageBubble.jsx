@@ -51,7 +51,7 @@ const MessageBubble = ({ isUser, text, isNew }) => {
 
   return (
     <StyledMessageBubble isUser={isUser}>
-      <ReactMarkdown sx={{maxWidth: "50%"}} rehypePlugins={[rehypeRaw]} >{ isUser ? text : displayedText }</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw]} >{ isUser ? text : displayedText }</ReactMarkdown>
       <div ref={messageEndRef} />
     </StyledMessageBubble>
   );

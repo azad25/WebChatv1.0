@@ -113,16 +113,16 @@ export default function ChatWindow() {
 
 
       <Box sx={{
-        flex: 1, overflowY: "auto", width: "100%", height: "100vh", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#232323" : '#e0e0e0', color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column",
+        flex: 1, overflowY: "auto", width: "100%", height: "auto", padding: "10px", marginBottom: "10px", backgroundColor: isDarkMode ? "#232323" : '#e0e0e0', color: isDarkMode ? "#007bff" : "#000000", borderRadius: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", flexDirection: "column",
         scrollbarWidth: "none", // For Firefox
         "&::-webkit-scrollbar": {
           display: "none", // For Chrome, Safari, and Opera
         }
       }}>
         {messages.map((message, index) => (
-          <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: message.sender === "user" ? "flex-end" : "flex-start", marginBottom: "20px" }}>
+          <Box ref={messageEndRef} key={index} sx={{ display: "flex", flexDirection: "column", alignItems: message.sender === "user" ? "flex-end" : "flex-start", marginBottom: "20px" }}>
             <Box sx={{
-              display: "flex", alignItems: "center", justifyContent: message.sender === "user" ? "flex-end" : "flex-start", backgroundColor: isDarkMode ? "#232323" : '#e0e0e0',
+              position: "relative", display: "flex", alignItems: "center", justifyContent: message.sender === "user" ? "flex-end" : "flex-start", backgroundColor: isDarkMode ? "#232323" : '#e0e0e0',
               color: isDarkMode ? "#007bff" : "#000000"
             }} onClick={handleLinkClick}
             >
@@ -142,7 +142,7 @@ export default function ChatWindow() {
             </Box>
           </Box>
         ))}
-        <div ref={messageEndRef} />
+        
       </Box>
       <Box
         sx={{

@@ -54,7 +54,8 @@ function Dashboard() {
       sx={{
         flexGrow: 1,
         backgroundColor: isDarkMode ? '#353535' : '#dcdde1',
-        height: '100vh',
+        height: '100%',
+        overflow: 'hidden',
         boxShadow: isDarkMode ? '0px 4px 6px rgba(255, 255, 255, 0.2)' : 'none',
       }}
       onClick={closeMenu}
@@ -85,7 +86,7 @@ function Dashboard() {
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Grid container spacing={2} sx={{ padding: 2, height: '90vh' }}>
+      <Grid container spacing={2} sx={{ padding: 2, height: '100%' }}>
         <Grid item xs={12} md={3} >
           <Paper
             elevation={3}
@@ -99,7 +100,7 @@ function Dashboard() {
             }}
           >
             <Box>
-              <StatusBar/>
+              <StatusBar />
             </Box>
 
 
@@ -109,6 +110,7 @@ function Dashboard() {
             sx={{
               padding: 2,
               height: "45%",
+              maxHeight: "45%",
               backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
@@ -121,7 +123,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <ChatWindow style={{height: '90%'}} />
+            <ChatWindow />
           {/* <Paper elevation={3} sx={{ padding: 2, height: '98%' }}>
           </Paper> */}
         </Grid>

@@ -116,7 +116,7 @@ const ImageSlider = ({ images, isDarkMode }) => {
         <AnimatePresence mode='wait'>
           <motion.img
             key={currentIndex}
-            src={images[currentIndex].url}
+            src={images[currentIndex] && images[currentIndex].url}
             alt={images[currentIndex].alt || 'Slider image'}
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}

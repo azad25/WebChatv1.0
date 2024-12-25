@@ -205,8 +205,9 @@ export const AppProvider = ({ children }) => {
   };
 
   const newChat = async () => {
-    // setKeywords(null);
-    // setLinks(null);
+    setKeywords(null);
+    setLinks(null);
+    setImages(null);
     try {
       await axios.post(API_ENDPOINT + "/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
