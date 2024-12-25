@@ -5,10 +5,6 @@ from llm_service import process_with_llm
 from context import chat_context
 from genaimodel import geminiModel,clear_history
 from flask_socketio import SocketIO, emit
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime
-
 import asyncio
 import threading
 
