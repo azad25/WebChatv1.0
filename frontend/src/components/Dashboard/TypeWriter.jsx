@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Typography } from '@mui/material';
-import {Circle} from '@mui/icons-material';
+import { Square } from '@mui/icons-material';
 
-const TypewriterText = ({ text, onComplete, delay }) => {
+const TypewriterText = ({ text, onComplete, typingSpeed = 100, pauseDuration = 2000 }) => {
   const [displayedText, setDisplayedText] = useState('');
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     let currentIndex = 0;
@@ -12,7 +13,7 @@ const TypewriterText = ({ text, onComplete, delay }) => {
 
     const typingInterval = setInterval(() => {
       if (currentIndex < text.length) {
-        setDisplayedText(text.substring(0, currentIndex + 1));
+        setDisplayedText((prev) => prev + text[currentIndex]);
         currentIndex++;
       } else {
         clearInterval(typingInterval);
@@ -21,14 +22,14 @@ const TypewriterText = ({ text, onComplete, delay }) => {
           if (onComplete) {
             onComplete();
           }
-        }, delay); // 2 second pause after typing completes
+        }, pauseDuration); // Pause after typing completes
       }
-    }, 50);
+    }, typingSpeed);
 
     return () => {
       clearInterval(typingInterval);
     };
-  }, [text, onComplete, delay]);
+  }, [text, onComplete, typingSpeed, pauseDuration]);
 
   return (
     <AnimatePresence mode='wait'>
@@ -41,10 +42,9 @@ const TypewriterText = ({ text, onComplete, delay }) => {
         {displayedText}
         <motion.span
           animate={{ opacity: [0, 1] }}
-          transition={{ repeat: Infinity, duration: 0.7 }}
           style={{ marginLeft: '2px' }}
         >
-          <Circle color="primary" sx={{height: '10px'}}/>
+          <Square sx={{ height: '12px', position: "relative", top: "2px", right: "5px" }} />
         </motion.span>
       </motion.span>
     </AnimatePresence>

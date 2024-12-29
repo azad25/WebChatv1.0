@@ -10,3 +10,6 @@ flask-socketio
 brotli
 aiohttp-retry
 redis
+psycopg2-binary
+sqlalchemy
+html5lib

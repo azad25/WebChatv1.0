@@ -16,6 +16,7 @@ USER_AGENTS = [
 async def fetch_web_data(url, max_retries=3):
 
     timeout = aiohttp.ClientTimeout(total=2)
+    links = []
 
     headers = {
         'User-Agent': random.choice(USER_AGENTS),
@@ -37,7 +38,35 @@ async def fetch_web_data(url, max_retries=3):
             async with session.get(url, headers=headers, allow_redirects=True, timeout=timeout) as response:
                 if response.status == 200:
                     content_type = response.headers.get('Content-Type', '').lower()
-                    
+                    response_html = BeautifulSoup(await response.text(), "html5lib")
+
+                    # Remove script and style elements
+                    for script_or_style in response_html(['script', 'style']):
+                        script_or_style.decompose()
+
+                    content_html = response_html.get_text(separator="\n", strip=True)
+
+                    # Extract all links
+                    links = []
+                    for a_tag in response_html.find_all('a', href=True):
+                        href = a_tag['href']
+                                                # Skip empty, javascript, and mailto links
+                        if not href or href.startswith(('javascript:', 'mailto:', '#')):
+                            continue
+                        
+                        # Clean up malformed URLs that have been concatenated
+                        if 'http' in href[8:]:  # Look for additional http after the first one
+                            # Split on http and keep only the first valid URL
+                            href_parts = href.split('http')
+                            href = 'http' + href_parts[1]
+                        
+                        # Only join URLs if the href is relative
+                        full_url = href if href.startswith(('http://', 'https://')) else urljoin(url, href)
+                        
+                        # Only include http(s) URLs
+                        if full_url.startswith(('http://', 'https://')):
+                            links.append(full_url)
+                        
                     if 'application/json' in content_type:
                         data = await response.json()
                         return {"text": str(data), "images": []}
@@ -80,10 +109,11 @@ async def fetch_web_data(url, max_retries=3):
                         # Clean up the text
                         content = re.sub(r'\s+', ' ', content)
                         content = re.sub(r'[\n\r\t]', ' ', content)
-                        
+
                         return {
-                            "text": content if content else url,
-                            "images": images[:5]  # Limit to first 5 images
+                            "text": content_html,
+                            "images": images[:5],  # Limit to first 5 images
+                            "links": links
                         }
                 
                 elif response.status == 403 and attempt < max_retries:
@@ -92,17 +122,17 @@ async def fetch_web_data(url, max_retries=3):
                     return await try_fetch(session, attempt + 1)
                 else:
                     print(f"Failed to fetch URL: {url}, Status Code: {response.status}")
-                    return {"text": url, "images": []}
+                    return {"text": url, "images": [], links: []}
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
             print(f"Network error for {url}: {str(e)}")
             if attempt < max_retries:
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
                 return await try_fetch(session, attempt + 1)
-            return {"text": url, "images": []}
+            return {"text": url, "images": [], links: []}
         except Exception as e:
             print(f"Unexpected error fetching {url}: {str(e)}")
-            return {"text": url, "images": []}
+            return {"text": url, "images": [], links: []}
 
     try:
         connector = aiohttp.TCPConnector(ssl=False, force_close=True)

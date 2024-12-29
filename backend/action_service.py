@@ -1,8 +1,6 @@
-from ollama import Client
 from web_service import fetch_web_data  # Ensure this import is available
 import json
-# Initialize the Llama model
-client = Client()
+import html
 
 async def generate_response(llm_response, genai_model):
     try:
@@ -70,6 +68,12 @@ def strip_characters(input_string):
 
 
 def parse_keywords(keyword_response):
+    # formatted_response = []
+    # formatted_keywords = []
+
+    # Combine the response and keywords
+    # full_response = formatted_response + formatted_keywords
+
     # Ensure keyword_response is a string
     if isinstance(keyword_response, dict):
         keyword_response = keyword_response.get('text', '')
@@ -78,18 +82,23 @@ def parse_keywords(keyword_response):
     lines = keyword_response.split("\n")
     keywords = []
 
+    # for i, keyword in enumerate(lines, start=1):
+    #     formatted_keywords += f"{i}. {keyword}\n"
+    #     formatted_response.append(keyword)
     # Iterate over each line and extract keywords
     for line in lines:
         # Check if the line starts with a number followed by a period
         if line.strip() and line.strip()[0].isdigit() and line.strip()[1] == '.':
             # Extract the keyword after the number and period
             keyword = line.strip().split('.', 1)[1].strip()
+            keyword = custom_sanitize(keyword)
             # keyword = strip_characters(keyword)
             # Ensure the keyword is 1 or 2 words long
             if 1 <= len(keyword.split()) <= 2:
                 keywords.append(keyword)
 
     return keywords
+    # return format_response
 def format_response(text):
     # Simple formatting logic to convert text into a plain text format
     paragraphs = text.split('\n')
@@ -106,3 +115,9 @@ def format_response(text):
                 formatted.append(para.strip())  # Return as plain text
 
     return "\n".join(formatted)  # Join paragraphs with new lines
+
+def custom_sanitize(input_text):
+    # Escape HTML characters
+    escaped_text = html.escape(input_text)
+    # Further processing can be done here (e.g., regex)
+    return escaped_text

@@ -5,18 +5,37 @@ import { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { motion } from 'framer-motion';
 import TypewriterText from './TypeWriter';
+import LoadingDots from '../LoadingDots';
 
 const StatusBar = () => {
-  const position = { lat: 53.54992, lng: 10.00678 };
+  const position = { lat: 23.8103, lng: 90.4125 };
   const [welcomeMessage, setWelcomeMessage] = useState("Hello, there, aim your AI assistant...");
-  const [weather, setWeather] = useState(null);
   const [aiStatus, setAiStatus] = useState("Working on it...");
   const [eventLogs, setEventLogs] = useState([]);
   const [randomText, setRandomText] = useState("Some AI response");
-  const { isAlive } = useContext(AppContext);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
   const [quotesIndex, setQuotesIndex] = useState(0);
+  const { state, logs, weather, isAlive, isLoading } = useContext(AppContext);
+  const [currentLogIndex, setCurrentLogIndex] = useState(0);  // Track current log being typed
+  const [logIndex, setLogIndex] = useState(0);  // Track current log being typed
+
+  // Function to handle completion of typing animation for logs
+  const handleQuotesTypingComplete = () => {
+    setQuotesIndex((prev) => (prev + 1) % quotesIndex.length); // Move to the next log, loop back to start
+  };
+
+  // Handle completion of each log typing
+  const handleLogComplete = () => {
+    setTimeout(() => {
+      setCurrentLogIndex((prev) => {
+        if (logs && logs.length > 0) {
+          return (prev + 1) % logs.length;
+        }
+        return prev;
+      });
+    }, typingConfig.pauseDuration);
+  };
 
   // Define animation variants for the circle
   const circleVariants = {
@@ -36,14 +55,35 @@ const StatusBar = () => {
     "Embrace the possibilities.",
   ];
 
+  const logVariants = {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3
+      }
+    },
+    exit: {
+      opacity: 0,
+      x: -20
+    }
+  };
+
+  // Standardized typing configuration
+  const typingConfig = {
+    typingSpeed: 20,    // Consistent speed across all sections
+    pauseDuration: 120 // Reduced pause duration between logs
+  };
+
   useEffect(() => {
     let timeout;
     if (isTypingComplete) {
       timeout = setTimeout(() => {
-        setMessageIndex((prev) => (prev + 1) % messages.length);
-        setQuotesIndex((prev) => (prev + 1) % randomQuotes.length);
-        setIsTypingComplete(false);
-      }, 1000); // 1 second transition between messages
+      }, 10); // 1 second transition between messages
     }
 
 
@@ -66,7 +106,7 @@ const StatusBar = () => {
     // });
 
     return () => {
-      if (timeout) clearTimeout(timeout);
+
     };
   }, [isTypingComplete, messages.length]);
 
@@ -78,19 +118,18 @@ const StatusBar = () => {
     setIsTypingComplete(true);
   };
 
+  // Ensure quotesIndex stays within bounds
+  useEffect(() => {
+    if (isTypingComplete) {
+      setQuotesIndex((prev) => (prev + 1) % randomQuotes.length);
+    }
+    console.log(isLoading)
+  }, [isTypingComplete, randomQuotes.length, isLoading]);
+
   return (
     <div style={{}}>
-      <Typography variant="p">
-        <TypewriterText
-          text={messages[messageIndex]}
-          onComplete={handleTypingComplete}
-          delay={3000}
-        />
-      </Typography>
-      <div style={{ display: 'flex' }}>
-        <div style={{ flex: 1, marginRight: '10px' }}>
-          <h3>
-          <motion.div
+      <h3>
+        <motion.div
           style={{
             width: '10px',
             height: '10px',
@@ -113,53 +152,94 @@ const StatusBar = () => {
             duration: 0.8,
           }}
         />
-            {isAlive ? "Online" : "Offline"}
-          </h3>
-          <p>{aiStatus}</p>
-          <p>
-          <TypewriterText
-          text={randomQuotes[quotesIndex]}
-          onComplete={handleTypingComplete}
-          delay={3000}
-        />
-          </p>
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ height: '100%', overflow: 'hidden', backgroundColor: '#2a2a2a', padding: '10px', borderRadius: '5px', color: "#2ecc71", fontSize: "12px" }}>
-            {eventLogs.map((log, index) => (
-              <p key={index}>{log}</p>
-            ))}
-            <p>POST req to /api/process</p>
-            <p>processing...</p>
-            <p>Gathering data....</p>
-            <p>Searching for data....</p>
-            <p>POST req to /api/process</p>
+        {isAlive ? "Online" : "Offline"}
+      </h3>
+      <div style={{ display: 'flex' }}>
+        <div style={{ flex: 1, marginRight: '10px', overflow: 'hidden' }}>
+          
+          <div style={{
+            position: 'relative',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            width: '80%',
+            maxWidth: '80%',
+            backgroundColor: 'transparent',
+            borderRadius: '5px',
+            height: '120px', 
+            fontWeight: 'bold',
+            marginTop: "10px"
+          }}>
+            <motion.div
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {logs && logs.map((log, index) => (
+                <motion.div
+                  key={log.id}
+                  variants={logVariants}
+                  style={{
+                    marginBottom: '5px',
+                    opacity: log.status === 'error' ? 0.7 : 1,
+                    // color: log.status === 'error' ? '#e74c3c' : '#2ecc71',
+                    color: isAlive ? "#27ae60" : "#e74c3c",
+                    fontSize: "8px"
+                  }}
+                >
+                  {index === currentLogIndex ? (
+                    <TypewriterText
+                      text={`${new Date(log.timestamp).toLocaleTimeString()} [${log.event_type}] ${log.message}`}
+                      onComplete={handleLogComplete}
+                      typingSpeed={typingConfig.typingSpeed}
+                      pauseDuration={typingConfig.pauseDuration}
+                    />
+                  ) : index < currentLogIndex ? (
+                    <span>
+                      {`${new Date(log.timestamp).toLocaleTimeString()} [${log.event_type}] ${log.message}`}
+                    </span>
+                  ) : null}
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
+        <div style={{ flex: 1 }}>
+        <Box>
+            <p>{aiStatus}</p>
+            <p>
+              {messages[0]}
+              {isLoading && <LoadingDots />}
+            </p>
+          </Box>
+        </div>
       </div>
-  
-        <Box sx={{marginTop: '15%', display: 'flex', flexDirection: 'row', alignItems: 'left', justifyContent: 'space-between'}}>
-        <div>
-          <Typography variant="h6">Weather</Typography>
+
+      <Box sx={{ marginTop: '5%', display: 'flex', flexDirection: 'row', alignItems: 'left', justifyContent: 'space-between' }}>
+        <div style={{ width: '200px', height: '150px', marginTop: '20px', borderRadius: '15px' }}>
           {weather ? (
             <div>
-              <p>{weather.location}</p>
+              <p>{weather.city}, {weather.country}</p>
               <p>{weather.temperature}°C</p>
-              <p>{weather.condition}</p>
+              <p>Feels like: {weather.feels_like}°C</p>
+              <p>Humidity: {weather.humidity}%</p>
+              <p>Wind Speed: {weather.wind_speed} m/s</p>
+              <p>{weather.description}</p>
             </div>
           ) : (
-            <p>Loading weather...</p>
+            <LoadingDots />
           )}
         </div>
-          <div style={{ width: '200px', height: '150px', marginTop: '10px', borderRadius: '15px' }}>
+        <div style={{ width: '50%', maxHeight: '120px', marginTop: '10px', borderRadius: '15px' }}>
           <APIProvider apiKey={'AIzaSyBnVkT9wiLnMv_RQmVIEkb-meUgPL2qXKs'}>
-            <Map defaultCenter={position} defaultZoom={10} mapId="4f9e5a305631374e">
+            <Map defaultCenter={position} defaultZoom={10} mapId="61a3b3b1647fb009">
               <AdvancedMarker position={position} />
             </Map>
           </APIProvider>
         </div>
-        </Box>
-      
+      </Box>
+
     </div>
   );
 };

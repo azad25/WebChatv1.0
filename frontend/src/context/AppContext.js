@@ -18,6 +18,9 @@ export const AppProvider = ({ children }) => {
   const [selectedModel] = useState("gemini-2.0");
   const [response, setResponse] = useState([]);
   const [ isAlive, setIsAlive ] = useState(true);
+  const [logs, setLogs] = useState([]);
+  const [weather, setWeather] = useState([]);
+  
 
   const [state, setState] = useState({});
 
@@ -25,7 +28,9 @@ export const AppProvider = ({ children }) => {
     let savedKeywords = [];
     let savedLinks = [];
     let savedImages = [];
+    let savedLogs = [];
     let savedDarkMode = false;
+    let savedWeather = [];
 
     try {
         const keywords = localStorage.getItem('keywords');
@@ -48,11 +53,27 @@ export const AppProvider = ({ children }) => {
       savedImages = []; // Default to empty array on error
   }
 
+  try {
+    const logs = localStorage.getItem('logs');
+    savedLogs = logs ? JSON.parse(logs) : [];
+} catch {
+    savedLogs = []; // Default to empty array on error
+}
+
+try {
+  const weather = localStorage.getItem('weather');
+  savedWeather = weather ? JSON.parse(weather) : [];
+} catch {
+  savedWeather = []; // Default to empty array on error
+}
+
     savedDarkMode = localStorage.getItem('darkMode') === 'true'; // Ensure it's a boolean
 
     if (savedKeywords && savedKeywords.length) setKeywords(savedKeywords);
     if (savedLinks && savedLinks.length) setLinks(savedLinks);
     if (savedImages && savedImages.length) setImages(savedImages);
+    if (savedLogs && savedLogs.length) setLogs(savedLogs);
+    if (savedWeather) setWeather(savedWeather);
     if (isDarkMode === savedDarkMode) setIsDarkMode(savedDarkMode)
   }, [setKeywords, setLinks, setImages, setIsDarkMode]);
 
@@ -61,6 +82,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('links', JSON.stringify(links));
     localStorage.setItem('keywords', JSON.stringify(keywords));
     localStorage.setItem('images', JSON.stringify(images));
+    localStorage.setItem('weather', JSON.stringify(weather));
     localStorage.setItem('darkMode', isDarkMode);
   }, [keywords, links, images, isDarkMode]);
 
@@ -88,17 +110,39 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (socket) {
+      // Listen for log updates
+      socket.on('logs_update', (data) => {
+        if (data.status === 'success') {
+          localStorage.setItem('logs', JSON.stringify(data.logs));
+          setLogs(data.logs);
+        } else {
+          console.error('Error receiving logs:', data.message);
+        }
+      });
+
+      // Request initial logs
+      socket.emit('request_logs');
       // Listen for "ping" messages from the server
       socket.on('disconnect', () => {
         setIsAlive(false);
       });
       socket.on('ping', (data) => {
         setIsAlive(true);
+        setWeather(data.weather)
+        localStorage.setItem('weather', JSON.stringify(data.weather));
         // Respond with a "pong"
         socket.emit('pong', { message: 'pong' });
       });
       socket.on('response', (data) => {
-        setResponse(data);
+        setResponse(data.history);
+      });
+      socket.on('images', (data) => {
+        console.log(data)
+        setImages(data);
+        localStorage.setItem('images', JSON.stringify(data));
+      });
+      socket.on('weather', (data) => {
+        console.log(data)
       });
     }
 
@@ -107,6 +151,8 @@ export const AppProvider = ({ children }) => {
     return () => {
       if (socket) {
         socket.off('response');
+        socket.off('logs_update');
+        socket.off('images');
       }
     };
   }, [socket, isAlive]);
@@ -148,7 +194,7 @@ export const AppProvider = ({ children }) => {
       }
       if (socket) {
         socket.on('response', (data) => {
-          setResponse(data);
+          setResponse(data.history);
           setIsLoading(false);
           if (data) {
             setCardData(null);
@@ -207,7 +253,8 @@ export const AppProvider = ({ children }) => {
   const newChat = async () => {
     setKeywords(null);
     setLinks(null);
-    setImages(null);
+    setLinks(null);
+    setLogs(null);
     try {
       await axios.post(API_ENDPOINT + "/api/clear_context"); // Clear context in the backend
       setMessages([]); // Clear the messages in the frontend
@@ -231,8 +278,16 @@ export const AppProvider = ({ children }) => {
     }));
   };
 
+  useEffect(() => {
+    if (socket) {
+      socket.on('connect', (data) => {
+        console.log(data)
+      });
+    }
+  }, [socket]);
+
   return (
-    <AppContext.Provider value={{ isAlive, setIsAlive , socket, state, isDarkMode, setIsDarkMode, keywords, setKeywords, links, setLinks, handleAction, sendMessage, messages, setMessages, cardData, setCardData, fetchResponse, input, setInput, isLoading, setIsLoading, selectedModel, setSelectedModel, handleLinkClick, handleAction, newChat, fetchConversationHistory, response, images, setImages }}>
+    <AppContext.Provider value={{ weather,logs, isAlive, setIsAlive , socket, state, isDarkMode, setIsDarkMode, keywords, setKeywords, links, setLinks, handleAction, sendMessage, messages, setMessages, cardData, setCardData, fetchResponse, input, setInput, isLoading, setIsLoading, selectedModel, setSelectedModel, handleLinkClick, handleAction, newChat, fetchConversationHistory, response, images, setImages, setIsLoading }}>
       <WebSocketProvider>
         {children}
       </WebSocketProvider>

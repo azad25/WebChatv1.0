@@ -53,9 +53,9 @@ function Dashboard() {
     <Box
       sx={{
         flexGrow: 1,
-        backgroundColor: isDarkMode ? '#353535' : '#dcdde1',
-        height: '100%',
-        overflow: 'hidden',
+        backgroundColor: isDarkMode ? '#191919' : '#dcdde1',
+        width: "100%",
+        height: "100%",
         boxShadow: isDarkMode ? '0px 4px 6px rgba(255, 255, 255, 0.2)' : 'none',
       }}
       onClick={closeMenu}
@@ -63,7 +63,7 @@ function Dashboard() {
       <AppBar
         position="static"
         sx={{
-          backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
+          backgroundColor: isDarkMode ? '#1D1D1D' : '#C8C8C8',
           color: isDarkMode ? '#e0e0e0' : '#232323',
           zIndex: 1000,
         }}
@@ -94,7 +94,7 @@ function Dashboard() {
               padding: 2,
               height: '45%',
               marginBottom: '20px',
-              backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
+              backgroundColor: isDarkMode ? '#1D1D1D' : '#C8C8C8',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
             }}
@@ -111,19 +111,19 @@ function Dashboard() {
               padding: 2,
               height: "45%",
               maxHeight: "45%",
-              backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
+              overflow: "hidden",
+              backgroundColor: isDarkMode ? '#1D1D1D' : '#C8C8C8',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <Typography variant="h6"></Typography>
             {images && images.length > 0 && (
               <ImageSlider images={images} isDarkMode={isDarkMode} />
             )}
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-            <ChatWindow />
+        <Grid item xs={12} md={6} sx={{ overflow: 'hidden', maxHeight: '100%' }}>
+          <ChatWindow />
           {/* <Paper elevation={3} sx={{ padding: 2, height: '98%' }}>
           </Paper> */}
         </Grid>
@@ -132,9 +132,11 @@ function Dashboard() {
           <Paper
             elevation={3}
             sx={{
-              height: '45%',
+              height: '25rem',
+              overflow: "hidden",
+              overflowY: "auto",
               mb: "20px",
-              backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
+              backgroundColor: isDarkMode ? '#1D1D1D' : '#C8C8C8',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
             }}
@@ -145,14 +147,16 @@ function Dashboard() {
                 variants={containerVariants}
                 style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row', alignItems: 'right', padding: 20 }}
               >
+                <Typography variant="h6">Keywords</Typography>
                 {keywords.map((item, index) => (
                   (item.type != "tools") ? (
                     <motion.div
                       initial="hidden"
                       animate="visible"
                       transition={{ duration: 0.3, ease: "easeInOut" }}
+                      sx={{ width: "100%" }}
                       key={index} variants={cardVariants} >
-                      <Button className="button" onClick={() => handleAction(item)} >
+                      <Button className="button" onClick={() => handleAction(item)}>
                         <AnimatedCard key={index} title={item.label} content={''} type={item.type} />
                       </Button>
                     </motion.div>
@@ -194,20 +198,18 @@ function Dashboard() {
               padding: 2,
               height: '45%',
               overflow: "hidden",
-              overflowY: "auto",
-              backgroundColor: isDarkMode ? '#232323' : '#e0e0e0',
+              backgroundColor: isDarkMode ? '#1D1D1D' : '#C8C8C8',
               color: isDarkMode ? '#e0e0e0' : '#232323',
               boxShadow: isDarkMode ? '0px 0px 10px rgba(255, 255, 255, 0.2)' : '0px 0px 10px rgba(0, 0, 0, 0.1)',
             }}
           >
             {isLoading && <LoadingDots />}
-            {links && (
+            {links && links.length > 1 && (
               <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-
-                style={{ display: "flex", flexDirection: "column", alignItems: 'left', justifyContent: "left", flexWrap: 'wrap', height: "auto", listStyleType: "none", gap: "10px", marginBottom: "10px" }}
+                style={{ display: "flex", flexDirection: "column", alignItems: 'left', justifyContent: "left", height: "25rem", listStyleType: "none", gap: "10px", overflowY: "auto", marginBottom: "10px" }}
               >
                 <Typography variant="h6">Related links</Typography>
                 {links.map((item, index) => (

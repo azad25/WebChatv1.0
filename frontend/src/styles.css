@@ -2,6 +2,9 @@
   margin: 0;
   padding: 0;
 }
+body{
+  height:100%!important
+}
 .app {
   height: 100vh;
   display: flex;
