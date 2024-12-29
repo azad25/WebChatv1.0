@@ -1,6 +1,6 @@
 # WebChat - AI Chatbot
 
-WebChat is a Gemini AI-powered chatbot application that allows users to interact with gemini model via REST API. This project utilizes React for the frontend and a Python backend to process user queries. Autmated keyword generation and search is also implemented.
+WebChat is a Gemini AI-powered chatbot app with web analyser that allows users to interact with Goodle Gemini model via REST API. This project utilizes React for the frontend and a Python backend to process user queries. Url Images slider,Autmated keyword generation and search is also implemented.
 ![Chat Interface Screenshot](preview.png)
 ## Table of Contents
 
